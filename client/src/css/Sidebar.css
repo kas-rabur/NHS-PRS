@@ -1,0 +1,35 @@
+/* Sidebar Styling */
+.sidebar {
+    background-color: #ffffff; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    padding: 20px; 
+    width: 200px; 
+    height: 100%; 
+    min-height: 600px;
+    margin-right: 20px; 
+  }
+  
+  .sidebar ul {
+    list-style: none; 
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar ul li {
+    margin-bottom: 15px; 
+  }
+  
+  .sidebar ul li a {
+    text-decoration: none; 
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333; 
+    transition: color 0.3s ease;
+  }
+  
+  .sidebar ul li a:hover {
+    color: #007bff; 
+  }
+  
