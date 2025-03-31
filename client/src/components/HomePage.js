@@ -1,6 +1,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Cards from "./Cards";
+import Topbar from "./Topbar";
 import CardLong from "./CardLong";
 import "../css/HomePage.css";
 
@@ -10,8 +11,10 @@ function HomePage() {
       <div className="content-wrapper">
         <Sidebar />
         <div className="cards-box">
+          <Topbar />
           <Cards />
           <CardLong />
+          
         </div>
       </div>
     </section>

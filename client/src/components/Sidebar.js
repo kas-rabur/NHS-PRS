@@ -1,18 +1,39 @@
 import React from "react";
-import "../css/Sidebar.css"; 
+import "../css/Sidebar.css";
+import { NavLink } from "react-router-dom";
 
 function Sidebar() {
   return (
     <div className="sidebar">
+      {/* Logo Section */}
+      <div className="logo-container">
+        PRS
+      </div>
+      {/* Navigation Menu */}
       <ul>
         <li>
-          <a href="/home">Home</a>
+        <NavLink
+            to="/"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Home
+          </NavLink>
         </li>
         <li>
-          <a href="/Page2">Log-in</a>
+        <NavLink
+            to="/Page2"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Login
+          </NavLink>
         </li>
         <li>
-          <a href="/page3">Register</a>
+        <NavLink
+            to="/page3"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Register
+          </NavLink>
         </li>
       </ul>
     </div>
