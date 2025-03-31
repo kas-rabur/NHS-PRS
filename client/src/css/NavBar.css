@@ -44,7 +44,7 @@
 }
 
 .nav a.active {
-  color: #ffcc00;
+  color: #0153ce;
   font-weight: bold;
-  border-bottom: 2px solid #ffcc00;
+  border-bottom: 2px solid #0153ce;
 }

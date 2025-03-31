@@ -1,65 +1,92 @@
-/* Sidebar Styling */
 .sidebar {
   background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  padding-left: 40px;
+  padding-right: 40px;
   width: 200px;
   height: 100%;
   min-height: 600px;
   margin-right: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.logo-text {
+  width: 90%;
+  margin-bottom: 0px;
+  border-radius: 10px;
+  text-align: left;
+  margin-left: 3px;
+}
+
+
+.logo-text h1 {
+  font-size: 10px;
+  color: #8f8f8f;
+  text-align: left;
+  font-weight: 300;
 }
 
 .logo-container {
-  width: 100%;
+  width: 85%;
   margin-bottom: 20px;
   display: flex;
   justify-content: center;
   font-weight: bold;
-  padding: 10px;
+}
+.logo-container img {
+  max-width: 100%; /* Ensure the image doesn't exceed the width of the container */
+  height: auto; /* Maintain the aspect ratio */
+  object-fit: contain; /* Prevent distortion and ensure the entire image fits */
 }
 
+
 .logo {
-  width: 80%;
+  width: 85%;
   max-width: 160px;
   height: auto;
   object-fit: contain;
   border-radius: 8px;
+  margin: 0;
 }
 
 .sidebar ul {
   list-style: none;
-  padding: 25px;
+  padding: 0;
   margin: 0;
   width: 100%;
-
 }
 
 .sidebar ul li {
+  width: 100%;
   margin-bottom: 15px;
-  margin-left: 0; 
-  text-align:center;
- 
 }
-
 
 .sidebar ul li a {
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 500;
   color: #333;
-  transition: color 0.3s ease;
-
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .sidebar ul li a:hover {
-  color:#a8a8a8;
+  background-color: #f4f4f4;
+  color: #0153ce;
+  transform: translateX(5px);
 }
+
 .sidebar a.active {
-  color: #ffcc00;
-  font-weight: bold;
+  color: #0153ce;
+  background-color: #eef4ff;
+  border-left: 4px solid #0153ce;
+  font-weight: 600;
 }

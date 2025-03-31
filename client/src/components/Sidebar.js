@@ -1,14 +1,21 @@
 import React from "react";
 import "../css/Sidebar.css";
 import { NavLink } from "react-router-dom";
+import HomeLogo from "../icons/HomeLogo.png";
+import LoginLogo from "../icons/LoginLogo.png";
+import RegisterLogo from "../icons/LockLogo.png";
+import LogoPRS from "../images/LogoNewPRS.png";
+
+
 
 function Sidebar() {
   return (
     <div className="sidebar">
       {/* Logo Section */}
       <div className="logo-container">
-        PRS
+      <img src={LogoPRS} alt="logo"></img>
       </div>
+      <div className="logo-text"><h1>MENU</h1></div>
       {/* Navigation Menu */}
       <ul>
         <li>
@@ -16,7 +23,7 @@ function Sidebar() {
             to="/"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Home
+            <img src={HomeLogo} alt="Home"/>Home
           </NavLink>
         </li>
         <li>
@@ -24,7 +31,7 @@ function Sidebar() {
             to="/Page2"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Login
+            <img src={RegisterLogo} alt="login"></img> Log-in
           </NavLink>
         </li>
         <li>
@@ -32,7 +39,7 @@ function Sidebar() {
             to="/page3"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Register
+            <img src={LoginLogo} alt="reg"></img>Register
           </NavLink>
         </li>
       </ul>
