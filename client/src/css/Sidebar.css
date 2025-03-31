@@ -61,4 +61,5 @@
 }
 .sidebar a.active {
   color: #ffcc00;
+  font-weight: bold;
 }
