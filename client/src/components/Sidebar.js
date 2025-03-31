@@ -1,7 +1,6 @@
 import React from "react";
 import "../css/Sidebar.css";
 import { NavLink } from "react-router-dom";
-import HomeLogo from "../icons/HomeLogo.png";
 import LoginLogo from "../icons/LoginLogo.png";
 import RegisterLogo from "../icons/LockLogo.png";
 import LogoPRS from "../images/LogoNewPRS.png";
@@ -18,14 +17,7 @@ function Sidebar() {
       <div className="logo-text"><h1>MENU</h1></div>
       {/* Navigation Menu */}
       <ul>
-        <li>
-        <NavLink
-            to="/"
-            className={({ isActive }) => (isActive ? "active" : "")}
-          >
-            <img src={HomeLogo} alt="Home"/>Home
-          </NavLink>
-        </li>
+
         <li>
         <NavLink
             to="/Page2"

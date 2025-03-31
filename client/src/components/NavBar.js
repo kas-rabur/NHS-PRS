@@ -14,7 +14,7 @@ function Navbar() {
             to="/"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            HomePage
+            About
           </NavLink>
         </li>
         <li>
@@ -22,15 +22,15 @@ function Navbar() {
             to="/Page2"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Features
+            Merchant
           </NavLink>
         </li>
         <li>
           <NavLink
-            to="/Page3"
+            to="/page3"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Contact
+            Gorvernment
           </NavLink>
         </li>
       </ul>
