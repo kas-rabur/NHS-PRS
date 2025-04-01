@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import LoginLogo from "../icons/LoginLogo.png";
 import RegisterLogo from "../icons/LockLogo.png";
 import LogoPRS from "../images/LogoNewPRS.png";
+import DoorIcon from "../icons/DoorIcon.png";
 
 
 
@@ -20,7 +21,7 @@ function Sidebar() {
 
         <li>
         <NavLink
-            to="/Page2"
+            to="/UserDashboard"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
             <img src={RegisterLogo} alt="login"></img> Log-in
@@ -28,10 +29,18 @@ function Sidebar() {
         </li>
         <li>
         <NavLink
-            to="/page3"
+            to="/GovernmentDashboard"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
             <img src={LoginLogo} alt="reg"></img>Register
+          </NavLink>
+        </li>
+        <li className="logout-item">
+        <NavLink
+            to="/MerchantDashboard"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <img src={DoorIcon} alt="Quit"></img>Logout
           </NavLink>
         </li>
       </ul>
