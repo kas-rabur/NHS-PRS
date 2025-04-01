@@ -1,13 +1,12 @@
 import React from "react";
 import "../css/CardLong.css"; 
 
-function CardLong() {
+function CardLong({title, content}) {
     return (
         <div className="card-long-container">
-            {/* Card Long */}
             <div className="card-long">
-                <h3>Card Long</h3>
-                <p>This is the content of Card Long.</p>
+                <h3>{title}</h3>
+                <p>{content}</p>
             </div>
         </div>
     );

@@ -3,10 +3,25 @@
   justify-content: center;
   align-items: flex-start;
   background-color: #f0f0f0;
-  padding: 20px;
+  padding: 15px;
   min-height: 100vh;
 }
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive, wraps items */
+  gap: 20px; /* Space between grid items */
+  width: 100%;
+  padding: 5px;
+}
 
+
+.topbar-home{
+  grid-column: 1/-1;
+  grid-row: 1;
+}
+.card-home{
+  grid-row: 2;
+}
 .content-wrapper {
   display: flex;
   gap: 20px;
@@ -26,8 +41,8 @@
   margin-top: 20px;
 }
 
-.cards-box {
+/* .cards-box {
   flex-grow: 1;
   padding: 20px;
 
-}
+} */

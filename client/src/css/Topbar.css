@@ -1,18 +1,17 @@
 .topbar-container {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    width: 100%;
+    padding-top: 20px;
 }
 
 .topbar {
-    width: 1460px;
+    width: 1430px;
     height: 70px;
     background-color: #ffffff;
     border: 1px solid #ddd;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
