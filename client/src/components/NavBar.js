@@ -11,26 +11,26 @@ function Navbar() {
       <ul className="nav">
         <li>
           <NavLink
-            to="/"
+            to="/UserDashboard"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            About
+            User
           </NavLink>
         </li>
         <li>
           <NavLink
-            to="/Page2"
+            to="/GovernmentDashboard"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Governent
+          </NavLink>
+        </li>
+        <li>
+          <NavLink
+            to="/MerchantDashboard"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
             Merchant
-          </NavLink>
-        </li>
-        <li>
-          <NavLink
-            to="/page3"
-            className={({ isActive }) => (isActive ? "active" : "")}
-          >
-            Gorvernment
           </NavLink>
         </li>
       </ul>

@@ -3,10 +3,10 @@ import Sidebar from "./Sidebar";
 import Card from "./Card"; // Updated to use the refactored Card component
 import Topbar from "./Topbar";
 import CardLong from "./CardLong";
-import "../css/HomePage.css";
+import "../css/UserDashboard.css";
 
 
-function HomePage() {
+function UserDashboard() {
   const [data, setData] = useState([]);
   
   useEffect(() => {
@@ -43,4 +43,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default UserDashboard;
