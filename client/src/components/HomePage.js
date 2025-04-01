@@ -29,7 +29,7 @@ function HomePage() {
       <div className="content-wrapper">
         <Sidebar />
         <div className="cards-box">
-          <Topbar className="topbar-home" />
+          <Topbar title="Dashboard" className="topbar-home" />
           <div className="cards-container">
             
             <Card className="card-home" title="Card 1" content={data} />
