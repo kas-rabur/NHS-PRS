@@ -33,6 +33,15 @@ function Navbar() {
             Merchant
           </NavLink>
         </li>
+        <li>
+          <NavLink
+            to="/Login"
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            Login
+          </NavLink>
+        </li>
+        
       </ul>
     </nav>
   );

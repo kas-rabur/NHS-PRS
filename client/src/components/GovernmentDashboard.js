@@ -4,6 +4,7 @@ import Card from "./Card"; // Updated to use the refactored Card component
 import Topbar from "./Topbar";
 import CardLong from "./CardLong";
 import "../css/GovernmentDashboard.css";
+import LoginForm from "./LoginForm";
 
 function GovernmentDashboard() {
   return (
@@ -20,7 +21,9 @@ function GovernmentDashboard() {
           </div>
           <CardLong title="Long card" content="This is the long card" />
         </div>
+        
       </div>
+        <LoginForm/>
     </section>
   );
 }

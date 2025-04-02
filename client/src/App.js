@@ -4,6 +4,7 @@ import Navbar from "./components/NavBar";
 import UserDashboard from "./components/UserDashboard";
 import GovernmentDashboard from "./components/GovernmentDashboard";
 import MerchantDashboard from "./components/MerchantDashboard";
+import LoginPage from "./components/LoginPage";
 import "./css/App.css"; 
 
 function App() {
@@ -14,6 +15,8 @@ function App() {
         <Route path="/UserDashboard" element={<UserDashboard />} />
         <Route path="/GovernmentDashboard" element={<GovernmentDashboard />} />
         <Route path="/MerchantDashboard" element={<MerchantDashboard />} />
+        <Route path="/Login" element={<LoginPage />} />
+
       </Routes>
     </Router>
   );
