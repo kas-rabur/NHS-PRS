@@ -21,9 +21,7 @@ function GovernmentDashboard() {
           </div>
           <CardLong title="Long card" content="This is the long card" />
         </div>
-        
       </div>
-        <LoginForm/>
     </section>
   );
 }

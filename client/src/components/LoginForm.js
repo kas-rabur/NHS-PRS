@@ -4,10 +4,10 @@ function LoginForm() {
     return (
         <div className="login-box">
             <div className="login-form">
-                <h2>Login Form</h2>
+                <h2>Login to PRS</h2>
                 <div className="form-group">
-                    <label>Username</label>
-                    <input type="text" id="username" name="username" placeholder="your-email@gmail.com" required />
+                    <label>PRS Username</label>
+                    <input type="text" id="username" name="username" placeholder="Your Username" required />
                     <label>Password</label>
                     <input type="text" id="username" name="username" placeholder="Your Password" required />
                 </div>
