@@ -10,7 +10,7 @@ def members():
 
 @app.route("/api/data", methods=["GET"])
 def get_data():
-    # Sample data; replace with your actual data
+    
     data = ["Supply Chain Status", "Health Monitoring", "Vaccination Tracking"]
     return jsonify(data)
 

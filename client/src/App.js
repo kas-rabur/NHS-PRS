@@ -5,6 +5,7 @@ import UserDashboard from "./components/UserDashboard";
 import GovernmentDashboard from "./components/GovernmentDashboard";
 import MerchantDashboard from "./components/MerchantDashboard";
 import LoginPage from "./components/LoginPage";
+import RegisterPage from "./components/RegisterPage";
 import "./css/App.css"; 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/GovernmentDashboard" element={<GovernmentDashboard />} />
         <Route path="/MerchantDashboard" element={<MerchantDashboard />} />
         <Route path="/Login" element={<LoginPage />} />
+        <Route path="/Register" element={<RegisterPage />} />
       </Routes>
     </div>
   );
