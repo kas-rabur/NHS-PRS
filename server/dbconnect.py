@@ -1,25 +1,12 @@
-from sqlalchemy import create_engine, text
+import pyodbc
 
-server = "localhost\\KAS"
-database = "NHS-PRS"
-username = "your_username"
-password = "your_password"
-driver = "ODBC Driver 17 for SQL Server"
-
-
-connection_string = (
-    f"mssql+pyodbc://@{server}/{database}"
-    f"?driver={driver.replace(' ', '+')}&trusted_connection=yes"
+conn = pyodbc.connect(
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=localhost;"
+    "DATABASE=NHS-PRS;"
+    "Trusted_Connection=yes;"
 )
 
-
-# Create the engine
-try:
-    engine = create_engine(connection_string)
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT GETDATE() AS CurrentTime"))
-        for row in result:
-            print(f"✅ Connected! SQL Server time is: {row['CurrentTime']}")
-except Exception as e:
-    print("❌ Failed to connect to SQL Server.")
-    print("Error:", e)
+cursor = conn.cursor()
+cursor.execute("SELECT * FROM [dbo].[USER]")
+print(cursor.fetchall())
