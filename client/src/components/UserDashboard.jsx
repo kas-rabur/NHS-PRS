@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import { FaUser } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
@@ -32,7 +32,7 @@ export default function UserDashboard() {
     // Static supplies placeholder
     setSupplies(["Face Masks", "Hand Sanitizer", "Thermometers"]);
 
-    // Fetch nearest suppliers from backend with prsId in POST body
+    // Fetch nearest suppliers from backend
     (async () => {
       try {
         const res = await fetch("/api/findNearestSuppliers", {
@@ -49,7 +49,6 @@ export default function UserDashboard() {
           throw new Error(data.error || "Failed to load suppliers");
         }
 
-        // data is array of { storeId, address, distance }
         setNearestSuppliers(data);
       } catch (err) {
         console.error(err);
@@ -109,10 +108,10 @@ export default function UserDashboard() {
           {/* Find Nearest Suppliers */}
           <div className="dashboard-card">
             <h3>Find Nearest Suppliers</h3>
-            <ul>
+            <ul className="supplier-list">
               {nearestSuppliers.map((sup, idx) => (
-                <li key={sup.storeId || idx}>
-                  {sup.storeId}: {sup.address} — {sup.distance.toFixed(2)} km
+                <li key={idx} className="supplier-item">
+                  {sup.address} — <strong>{sup.distance.toFixed(2)} km</strong>
                 </li>
               ))}
             </ul>
