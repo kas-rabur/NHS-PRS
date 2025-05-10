@@ -4,7 +4,7 @@ import bcrypt
 def register_user(data):
     national_id = data["nationalId"]
     dob = data["dob"]
-    digit_group = data.get("digitGroup") or None
+    digit_group = national_id[-1] or None
     name = data["name"]
     address = data.get("address") or None
     user_type = data.get("userType") or None
