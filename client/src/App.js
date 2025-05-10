@@ -6,6 +6,7 @@ import GovernmentDashboard from "./components/GovernmentDashboard";
 import MerchantDashboard from "./components/MerchantDashboard";
 import LoginPage from "./components/LoginPage";
 import RegisterPage from "./components/RegisterPage";
+import LandingPage from "./components/LandingPage";
 import "./css/App.css"; 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
     <div>
       {!excludedRoutes.includes(location.pathname) && <Navbar />}
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/UserDashboard" element={<UserDashboard />} />
         <Route path="/GovernmentDashboard" element={<GovernmentDashboard />} />
         <Route path="/MerchantDashboard" element={<MerchantDashboard />} />

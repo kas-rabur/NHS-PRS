@@ -1,0 +1,123 @@
+/* LandingPage.css */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.landing-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 0 20px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1f2937;
+  padding: 1rem 2rem;
+  color: white;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links li a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav-links li a:hover {
+  text-decoration: underline;
+}
+
+.landing-header {
+  text-align: center;
+  padding: 3rem 0 2rem;
+}
+
+.landing-header h1 {
+  font-size: 2.5rem;
+  color: #1f2937;
+}
+
+.landing-header p {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.landing-intro, .landing-features, .landing-benefits {
+  background-color: white;
+  margin: 2rem 0;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.landing-intro h2,
+.landing-features h2,
+.landing-benefits h2 {
+  color: #1f2937;
+}
+
+.landing-features ul,
+.landing-benefits ul {
+  padding-left: 1.2rem;
+  list-style-type: disc;
+  margin-top: 1rem;
+}
+
+.landing-routes {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.route-card {
+  flex: 1 1 calc(33% - 1rem);
+  text-decoration: none;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+  color: #1f2937;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.route-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.route-card h2 {
+  margin-top: 0;
+  color: #111827;
+}
+
+.route-card p {
+  margin: 0.5rem 0 0;
+}
+
+.landing-footer {
+  text-align: center;
+  padding: 2rem 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  background-color: #f1f5f9;
+  margin-top: 3rem;
+  border-top: 1px solid #e5e7eb;
+}
