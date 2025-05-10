@@ -30,7 +30,7 @@
 .id-card {
   flex-direction: row;
   align-items: center;
-  border-left: 5px solid #2e7d32;
+  border-left: 5px solid #0153ce;
   padding: 1rem;
 }
 
@@ -39,13 +39,15 @@
   height: 80px;
   background: #ddd;
   border-radius: 0.5rem;
-  margin-right: 1rem;
+  display: block;        
+  margin: 0 auto;        
 }
+
 
 .id-details h4 {
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
-  color: #2e7d32;
+  color: #0153ce;
 }
 
 .id-details p {
@@ -98,18 +100,18 @@
 }
 
 .btn-primary {
-  background: #2e7d32;
+  background: #0153ce;
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: #27692a;
+  background: #0153ce;
 }
 
 .btn-secondary {
   background: #fff;
-  color: #2e7d32;
-  border: 1px solid #2e7d32;
+  color: #0153ce;
+  border: 1px solid #0153ce;
   margin-right: 0.5rem;
 }
 
