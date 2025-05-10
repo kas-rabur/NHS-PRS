@@ -1,6 +1,47 @@
 import pyodbc
 import bcrypt
 
+def login_user(data):
+    national_id = data["nationalId"]
+    raw_password = data["password"].encode("utf-8")
+
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+
+    try:
+        # Fetch stored hash and user info
+        cur.execute(
+            "SELECT Password_Hash, PRS_Id, Role_ID, Name, User_Type "
+            "FROM [USER] WHERE National_Identifier = ?",
+            national_id
+        )
+        row = cur.fetchone()
+        if not row:
+            return {"success": False, "error": "Invalid credentials."}
+
+        stored_hash, prs_id, role_id, name, user_type = row
+        # Verify password
+        if not bcrypt.checkpw(raw_password, stored_hash.encode("utf-8")):
+            return {"success": False, "error": "Invalid credentials."}
+
+        return {
+            "success": True,
+            "prsId": prs_id,
+            "roleId": role_id,
+            "name": name,  
+            "userType": user_type
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+    finally:
+        cur.close()
+        conn.close()
+
 def register_user(data):
     national_id = data["nationalId"]
     dob = data["dob"]
@@ -51,3 +92,29 @@ def register_user(data):
     finally:
         cur.close()
         conn.close()
+
+def fetch_suppliers():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT Store_ID, Address FROM STORE")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return [{"storeId": r[0], "address": r[1]} for r in rows]
+
+def fetch_user_location(prs_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT Address FROM [USER] WHERE PRS_Id = ?", prs_id)
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    return row[0] if row else None
