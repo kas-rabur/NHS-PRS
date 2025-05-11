@@ -6,6 +6,19 @@
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.dashboard-pair {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.dashboard-pair>.update-card,
+.dashboard-pair>.family-card {
+  flex: 1 1 50%;
+  max-width: none;
+  margin: 0;
+}
+
 .dashboard-main {
   flex-grow: 1;
   padding: 2rem;
@@ -25,17 +38,19 @@
   background: #fff;
   border-radius: 0.75rem;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.dashboard-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  margin-top: 20px;
 }
 
-/* “ID card” look: left border + centered icon/details */
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ID card style */
 .id-card {
   display: flex;
   flex-direction: column;
@@ -44,66 +59,79 @@
   border-left: 5px solid #0153ce;
   text-align: center;
 }
-.id-photo {
-  margin-bottom: 1rem;
-}
-.id-details h4 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-  color: #0153ce;
-}
-.id-details p,
-.id-details ul {
-  margin: 0.25rem 0;
-  font-size: 0.95rem;
-  color: #333;
-}
-.id-details ul {
-  list-style: none;
-  padding: 0;
-}
-.id-details ul li {
-  border-bottom: 1px solid #eee;
-  padding: 0.5rem 0;
-}
-.id-details ul li:last-child {
-  border-bottom: none;
-}
 
-/* Full-width card */
-.dashboard-fullwidth {
+/* Update section card */
+.update-card {
   flex: 1 1 100%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* Heading inside non–ID cards */
-.dashboard-card h3 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-  color: #333;
-}
 
-/* Lists inside non–ID cards */
-.dashboard-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem;
-}
-.dashboard-card li {
-  padding: 0.5rem 0;
+/* Tab buttons */
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
   border-bottom: 1px solid #eee;
 }
-.dashboard-card li:last-child {
-  border-bottom: none;
+
+.btn-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #0153ce;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  border-bottom: 2px solid transparent;
 }
 
-.search-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ccc;
+.btn-tab:hover {
+  border-bottom-color: #136ff8;
+}
+
+.btn-tab.active {
+  border-bottom-color: #0153ce;
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-card input,
+.dashboard-card select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
   border-radius: 0.5rem;
   font-size: 1rem;
-  margin-bottom: 1rem;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 10px;
 }
 
+.dashboard-card input::placeholder,
+.dashboard-card select {
+  color: #aaa;
+}
+
+.dashboard-card input:focus,
+.dashboard-card select:focus {
+  outline: none;
+  border-color: #0153ce;
+  box-shadow: 0 0 0 3px rgba(1, 83, 206, 0.15);
+}
+
+/* Primary and secondary buttons */
 .btn-primary,
 .btn-secondary {
   font-size: 1rem;
@@ -112,13 +140,13 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
-  margin-left: 20px;
 }
 
 .btn-primary {
   background: #0153ce;
   color: #fff;
 }
+
 .btn-primary:hover {
   background: #136ff8;
   transform: translateY(-1px);
@@ -129,74 +157,64 @@
   color: #0153ce;
   border: 1px solid #0153ce;
 }
+
 .btn-secondary:hover {
   background: #f4f6f8;
 }
 
-.card-actions {
-  margin-top: auto;
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 600px) {
-  .dashboard-main {
-    padding: 1rem;
-  }
-  .dashboard-card {
-    padding: 1rem;
-  }
-}
-
-.dashboard-card input,
-.dashboard-card select {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.75rem 1.5rem 0.75rem 1rem; 
-  margin-bottom: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.dashboard-card input::placeholder,
-.dashboard-card select {
-  color: #aaa;
-}
-.dashboard-card input:focus,
-.dashboard-card select:focus {
-  outline: none;
-  border-color: #0153ce;
-  box-shadow: 0 0 0 3px rgba(1,83,206,0.15);
-}
-
+/* Messages */
 .info-msg {
   margin-top: 0.5rem;
   font-size: 0.9rem;
   color: #0153ce;
 }
 
-.btn-submit {
-  font-size: 1rem;
-  padding: 0.6rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-  background: #0153ce;
-  color: #fff;
+.error-msg {
+  color: #b60e0e;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
 }
-.btn-submit:hover {
-  background: #136ff8;
-  transform: translateY(-1px);
-}
-.remove-button{
+
+/* Remove button */
+.remove-button {
   background: #b60e0e;
   color: #fff;
-  margin-left: 10px;
+  margin-left: 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
+
 .remove-button:hover {
   background: #f52121;
-  cursor: pointer;
+}
+
+/* Responsive tweaks */
+@media (max-width: 1024px) {
+  .dashboard-card {
+    flex: 1 1 calc((100% - (2 * 1.5rem)) / 3);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-card {
+    flex: 1 1 calc((100% - (1 * 1.5rem)) / 2);
+  }
+
+  .update-card {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  .dashboard-card {
+    padding: 1rem;
+    flex: 1 1 100%;
+  }
 }

@@ -8,7 +8,8 @@ import distanceCalc
 app = Flask(__name__)
 CORS(app)
 
-app.config['SECRET_KEY'] = '12345678910'
+app.config["SECRET_KEY"] = "12345678910"
+
 
 @app.route("/api/register", methods=["POST"])
 def api_register():
@@ -23,6 +24,7 @@ def api_register():
         return jsonify({"message": "User registered", "prsId": result["prsId"]}), 201
     else:
         return jsonify({"error": result["error"]}), 500
+
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -39,27 +41,26 @@ def login():
     # gen JWT token with a 6 hr expiry
     payload = {
         "prs_id": result["prsId"],
-        "role":   result["roleId"],   
-        "name":   result["name"],
-        "DOB":    result["dob"],
-        "exp":    datetime.datetime.utcnow() + datetime.timedelta(hours=6)
+        "role": result["roleId"],
+        "name": result["name"],
+        "DOB": result["dob"],
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=6),
     }
     print("Payload: ", payload)
-    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm="HS256")
+    token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
+    return jsonify({"message": "Login successful", "token": token}), 200
 
-    return jsonify({
-        "message": "Login successful",
-        "token": token
-    }), 200
 
 @app.route("/api/findNearestSuppliers", methods=["POST"])
 def fetch_suppliers():
     prs_ID = request.json.get("prsId")
-    supplier_data = dblogic.fetch_suppliers()        # returns [{ "storeId": "...", "address": "..." }, ...]
+    supplier_data = (
+        dblogic.fetch_suppliers()
+    )  # returns [{ "storeId": "...", "address": "..." }, ...]
     user_location = dblogic.fetch_user_location(prs_ID)
     print
-    
+
     if not user_location:
         return jsonify({"error": "User location not found"}), 404
 
@@ -71,11 +72,9 @@ def fetch_suppliers():
             km = distanceCalc.get_straight_line_km(addr, user_location)
         except Exception:
             continue
-        results.append({
-            "storeId":  sup["storeId"],
-            "address":  addr,
-            "distance": round(km, 2)
-        })
+        results.append(
+            {"storeId": sup["storeId"], "address": addr, "distance": round(km, 2)}
+        )
 
     results.sort(key=lambda x: x["distance"])
     print("Results: ", results)
@@ -95,6 +94,7 @@ def fetch_user_vacc_record():
         return jsonify({"error": "Vaccination record not found"}), 404
     return jsonify(result), 200
 
+
 @app.route("/api/addFamilyMember", methods=["POST"])
 def add_family_member_route():
     data = request.get_json() or {}
@@ -102,33 +102,38 @@ def add_family_member_route():
     required_fields = ["prsId", "nationalId", "name", "dob", "address", "userType"]
     missing = [f for f in required_fields if not data.get(f)]
     if missing:
-        return jsonify({
-            "success": False,
-            "error": f"Missing fields: {', '.join(missing)}"
-        }), 400
-    
+        return (
+            jsonify(
+                {"success": False, "error": f"Missing fields: {', '.join(missing)}"}
+            ),
+            400,
+        )
+
     member_payload = {
-        "prsId":      data["prsId"],
+        "prsId": data["prsId"],
         "nationalId": data["nationalId"],
-        "name":       data["name"],
-        "dob":        data["dob"],
-        "address":    data["address"],
-        "userType":   data["userType"],
+        "name": data["name"],
+        "dob": data["dob"],
+        "address": data["address"],
+        "userType": data["userType"],
     }
     print("Member payload: ", member_payload)
 
     result = dblogic.add_family_member(member_payload)
 
     if result.get("success"):
-        return jsonify({
-            "success": True,
-            "message": "Family member added",
-        }), 201
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Family member added",
+                }
+            ),
+            201,
+        )
     else:
-        return jsonify({
-            "success": False,
-            "error": result["error"]
-        }), 500
+        return jsonify({"success": False, "error": result["error"]}), 500
+
 
 @app.route("/api/getFamilyMembers", methods=["POST"])
 def get_family_members():
@@ -141,28 +146,72 @@ def get_family_members():
         return jsonify({"error": "Family members not found"}), 404
     return jsonify(result), 200
 
+
 @app.route("/api/removeFamilyMember", methods=["POST"])
 def remove_family_member():
     data = request.get_json() or {}
     required_fields = ["prsId", "familyMemberId"]
     missing = [f for f in required_fields if not data.get(f)]
     if missing:
-        return jsonify({
-            "success": False,
-            "error": f"Missing fields: {', '.join(missing)}"
-        }), 400
+        return (
+            jsonify(
+                {"success": False, "error": f"Missing fields: {', '.join(missing)}"}
+            ),
+            400,
+        )
 
     result = dblogic.remove_family_member(data["prsId"], data["familyMemberId"])
     if result.get("success"):
-        return jsonify({
-            "success": True,
-            "message": "Family member removed",
-        }), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Family member removed",
+                }
+            ),
+            200,
+        )
     else:
-        return jsonify({
-            "success": False,
-            "error": result["error"]
-        }), 500
+        return jsonify({"success": False, "error": result["error"]}), 500
+
+
+@app.route("/api/updateAddress", methods=["POST"])
+def update_address_route():
+    data = request.get_json() or {}
+    required = ["prsId", "address"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return (
+            jsonify(success=False, error=f"Missing fields: {', '.join(missing)}"),
+            400,
+        )
+
+    result = dblogic.update_address(data["prsId"], data["address"])
+    if result.get("success"):
+        return jsonify(success=True, message="Address updated"), 200
+    return jsonify(success=False, error=result["error"]), 400
+
+
+@app.route("/api/updatePassword", methods=["POST"])
+def update_password_route():
+    data = request.get_json() or {}
+    required = ["prsId", "oldPassword", "newPassword", "confirmPassword"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return (
+            jsonify(success=False, error=f"Missing fields: {', '.join(missing)}"),
+            400,
+        )
+
+    if data["newPassword"] != data["confirmPassword"]:
+        return jsonify(success=False, error="Passwords do not match"), 400
+
+    result = dblogic.update_password(
+        data["prsId"], data["oldPassword"], data["newPassword"]
+    )
+    if result.get("success"):
+        return jsonify(success=True, message="Password updated"), 200
+    return jsonify(success=False, error=result["error"]), 400
 
 
 if __name__ == "__main__":

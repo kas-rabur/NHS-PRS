@@ -215,6 +215,7 @@ def add_family_member(data):
             schedule_id,
             family_id
         )
+        print("Inserted family member with DOB: ", dob)
 
         conn.commit()
         return {"success": True}
@@ -275,6 +276,64 @@ def remove_family_member(prs_id, family_member_prs_id):
         cur.execute(
             "DELETE FROM [USER] WHERE PRS_Id = ? AND Family_ID = ?",
             family_member_prs_id, prs_id
+        )
+        conn.commit()
+        return {"success": True}
+
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "error": str(e)}
+
+    finally:
+        cur.close()
+        conn.close()
+
+def update_address(prs_id, new_address):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "UPDATE [USER] SET Address = ? WHERE PRS_Id = ?",
+            new_address, prs_id
+        )
+        conn.commit()
+        return {"success": True}
+
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "error": str(e)}
+
+    finally:
+        cur.close()
+        conn.close()
+
+
+def update_password(prs_id, old_password, new_password):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT Password_Hash FROM [USER] WHERE PRS_Id = ?",
+            prs_id
+        )
+        row = cur.fetchone()
+        if not row:
+            return {"success": False, "error": "User not found."}
+
+        stored_hash = row[0]
+        if not bcrypt.checkpw(old_password.encode("utf-8"), stored_hash.encode("utf-8")):
+            return {"success": False, "error": "Old password is incorrect."}
+
+        hashed_new_password = bcrypt.hashpw(new_password.encode("utf-8"), bcrypt.gensalt()).decode()
+        cur.execute(
+            "UPDATE [USER] SET Password_Hash = ? WHERE PRS_Id = ?",
+            hashed_new_password, prs_id
         )
         conn.commit()
         return {"success": True}
