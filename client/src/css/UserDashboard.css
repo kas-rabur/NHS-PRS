@@ -12,11 +12,20 @@
 }
 
 .dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
   margin-top: 1rem;
 }
+
+.dashboard-card {
+  flex: 1 1 280px;
+}
+
+.dashboard-fullwidth {
+  flex: 1 1 100%;
+}
+
 
 .dashboard-card {
   background: #fff;
@@ -28,20 +37,19 @@
 }
 
 .id-card {
-  flex-direction: row;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   border-left: 5px solid #0153ce;
   padding: 1rem;
+  text-align: center;
 }
 
 .id-photo {
-  width: 80px;
-  height: 80px;
-  background: #ddd;
-  border-radius: 0.5rem;
-  display: block;        
-  margin: 0 auto;        
+  margin: 0 auto 1rem;
 }
+
 
 
 .id-details h4 {
@@ -102,10 +110,11 @@
 .btn-primary {
   background: #0153ce;
   color: #fff;
+  margin-left: 1rem;
 }
 
 .btn-primary:hover {
-  background: #0153ce;
+  background: #136ff8;
 }
 
 .btn-secondary {

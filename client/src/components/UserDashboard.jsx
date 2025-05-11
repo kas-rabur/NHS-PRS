@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {jwtDecode} from "jwt-decode";
-import { FaUser } from "react-icons/fa";
+import { FaUser, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import "../css/UserDashboard.css";
@@ -29,10 +29,8 @@ export default function UserDashboard() {
       return;
     }
 
-    // Static supplies placeholder
     setSupplies(["Face Masks", "Hand Sanitizer", "Thermometers"]);
 
-    // Fetch nearest suppliers from backend
     (async () => {
       try {
         const res = await fetch("/api/findNearestSuppliers", {
@@ -43,12 +41,8 @@ export default function UserDashboard() {
           },
           body: JSON.stringify({ prsId: decoded.prs_id })
         });
-
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to load suppliers");
-        }
-
+        if (!res.ok) throw new Error(data.error || "Failed to load suppliers");
         setNearestSuppliers(data);
       } catch (err) {
         console.error(err);
@@ -56,17 +50,35 @@ export default function UserDashboard() {
       }
     })();
 
-    // Static purchase history placeholder
     setPurchaseHistory([
       { item: "Face Masks", date: "2025-04-01", qty: 2 },
       { item: "Thermometers", date: "2025-03-20", qty: 1 }
     ]);
 
-    // Static vaccination records placeholder
-    setVaccRecords([
-      { date: "2025-01-15", vaccine: "COVID-19", dose: "2nd" }
-    ]);
+    (async () => {
+      try {
+        const res = await fetch("/api/getUserVaccRecord", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ prsId: decoded.prs_id })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load vaccination records");
+        setVaccRecords(data);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      }
+    })();
   }, []);
+
+  const openInMaps = (address) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="dashboard-container">
@@ -77,7 +89,6 @@ export default function UserDashboard() {
 
         <section className="dashboard-grid">
 
-          {/* PRS Identity Card */}
           <div className="dashboard-card id-card">
             <div className="id-photo">
               <FaUser size={48} color="#777" />
@@ -89,7 +100,6 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Locate Critical Supplies */}
           <div className="dashboard-card">
             <h3>Locate Critical Supplies</h3>
             <input
@@ -102,23 +112,31 @@ export default function UserDashboard() {
                 <li key={idx}>{supply}</li>
               ))}
             </ul>
-            <button className="btn-primary">View on Map</button>
+            <button
+              className="btn-primary"
+              onClick={() => openInMaps("Your+Location")}
+            >
+              View on Map
+            </button>
           </div>
 
-          {/* Find Nearest Suppliers */}
           <div className="dashboard-card">
             <h3>Find Nearest Suppliers</h3>
             <ul className="supplier-list">
               {nearestSuppliers.map((sup, idx) => (
                 <li key={idx} className="supplier-item">
                   {sup.address} — <strong>{sup.distance.toFixed(2)} km</strong>
+                  <button
+                    className="btn-primary"
+                    onClick={() => openInMaps(sup.address)}
+                  >
+                    View on Map
+                  </button>
                 </li>
               ))}
             </ul>
-            <button className="btn-primary">Show Locations</button>
           </div>
 
-          {/* Purchase History */}
           <div className="dashboard-card">
             <h3>Purchase History</h3>
             <ul>
@@ -129,18 +147,25 @@ export default function UserDashboard() {
             <button className="btn-secondary">View All</button>
           </div>
 
-          {/* Vaccination Records */}
           <div className="dashboard-card dashboard-fullwidth">
             <h3>Vaccination Records</h3>
-            <ul>
-              {vaccRecords.map((rec, idx) => (
-                <li key={idx}>{rec.date} — {rec.vaccine} ({rec.dose})</li>
-              ))}
-            </ul>
-            <div className="card-actions">
-              <button className="btn-secondary">Upload Record</button>
-              <button className="btn-primary">View All</button>
-            </div>
+            {vaccRecords.length === 0 ? (
+              <p>No records found.</p>
+            ) : (
+              <ul className="vacc-records-inline">
+                {vaccRecords.map((rec, idx) => (
+                  <li key={idx} className="vacc-record-item">
+                    <span className="record-prs">{rec.prsId}</span> —
+                    <span className="record-date"> {new Date(rec.date).toLocaleDateString()}</span> —
+                    <span className="record-vaccine"> {rec.vaccineName}</span> —
+                    <span className="record-dose"> Dose {rec.dose}</span> —
+                    <span className="record-verified">
+                      {rec.verified ? <FaCheckCircle /> : <FaTimesCircle />}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
         </section>

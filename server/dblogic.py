@@ -118,3 +118,29 @@ def fetch_user_location(prs_id):
     conn.close()
 
     return row[0] if row else None
+
+def fetch_user_vacc_record(prs_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM dbo.VACCINATION_RECORD WHERE PRS_Id = ?",
+        (prs_id,)
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    print("Vaccination records: ", rows)
+    return [
+        {
+            "prsId":    r[1],
+            "vaccineName":r[2],
+            "dose": r[3],
+            "date": r[4],
+            "verified": r[5],
+        }
+        for r in rows
+    ]
+    

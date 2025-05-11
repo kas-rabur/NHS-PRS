@@ -80,5 +80,20 @@ def fetch_suppliers():
     print("Results: ", results)
     return jsonify(results), 200
 
+
+@app.route("/api/getUserVaccRecord", methods=["POST"])
+def fetch_user_vacc_record():
+    prs_ID = request.json.get("prsId")
+    print("PRS ID in server: ", prs_ID)
+    if not prs_ID:
+        return jsonify({"error": "Missing PRS ID"}), 400
+
+    result = dblogic.fetch_user_vacc_record(prs_ID)
+    print("Result: ", result)
+    if not result:
+        return jsonify({"error": "Vaccination record not found"}), 404
+    return jsonify(result), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
