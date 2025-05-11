@@ -41,6 +41,7 @@ def login():
         "prs_id": result["prsId"],
         "role":   result["roleId"],   
         "name":   result["name"],
+        "DOB":    result["dob"],
         "exp":    datetime.datetime.utcnow() + datetime.timedelta(hours=6)
     }
     print("Payload: ", payload)
@@ -92,6 +93,52 @@ def fetch_user_vacc_record():
     print("Result: ", result)
     if not result:
         return jsonify({"error": "Vaccination record not found"}), 404
+    return jsonify(result), 200
+
+@app.route("/api/addFamilyMember", methods=["POST"])
+def add_family_member_route():
+    data = request.get_json() or {}
+
+    required_fields = ["prsId", "nationalId", "name", "dob", "address", "userType"]
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({
+            "success": False,
+            "error": f"Missing fields: {', '.join(missing)}"
+        }), 400
+    
+    member_payload = {
+        "prsId":      data["prsId"],
+        "nationalId": data["nationalId"],
+        "name":       data["name"],
+        "dob":        data["dob"],
+        "address":    data["address"],
+        "userType":   data["userType"],
+    }
+    print("Member payload: ", member_payload)
+
+    result = dblogic.add_family_member(member_payload)
+
+    if result.get("success"):
+        return jsonify({
+            "success": True,
+            "message": "Family member added",
+        }), 201
+    else:
+        return jsonify({
+            "success": False,
+            "error": result["error"]
+        }), 500
+
+@app.route("/api/getFamilyMembers", methods=["POST"])
+def get_family_members():
+    prs_ID = request.json.get("prsId")
+    if not prs_ID:
+        return jsonify({"error": "Missing PRS ID"}), 400
+
+    result = dblogic.get_family_members(prs_ID)
+    if not result:
+        return jsonify({"error": "Family members not found"}), 404
     return jsonify(result), 200
 
 

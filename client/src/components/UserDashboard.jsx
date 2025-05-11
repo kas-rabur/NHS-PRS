@@ -8,9 +8,12 @@ import "../css/UserDashboard.css";
 export default function UserDashboard() {
   const [prsId, setPrsId] = useState("");
   const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
   const [supplies, setSupplies] = useState([]);
   const [nearestSuppliers, setNearestSuppliers] = useState([]);
-  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [familyForm, setFamilyForm] = useState({ nationalId: "", name: "", dob: "", address: "", userType: "individual" });
+  const [familyMessage, setFamilyMessage] = useState("");
   const [vaccRecords, setVaccRecords] = useState([]);
   const [error, setError] = useState("");
 
@@ -23,6 +26,7 @@ export default function UserDashboard() {
       decoded = jwtDecode(token);
       setPrsId(decoded.prs_id);
       setName(decoded.name);
+      setDob(decoded.DOB);
     } catch (err) {
       console.error("Invalid token", err);
       setError("Authentication error");
@@ -31,6 +35,7 @@ export default function UserDashboard() {
 
     setSupplies(["Face Masks", "Hand Sanitizer", "Thermometers"]);
 
+    // Fetch nearest suppliers
     (async () => {
       try {
         const res = await fetch("/api/findNearestSuppliers", {
@@ -50,11 +55,28 @@ export default function UserDashboard() {
       }
     })();
 
-    setPurchaseHistory([
-      { item: "Face Masks", date: "2025-04-01", qty: 2 },
-      { item: "Thermometers", date: "2025-03-20", qty: 1 }
-    ]);
+    // Fetch family members
+    (async () => {
+      try {
+        const res = await fetch("/api/getFamilyMembers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ prsId: decoded.prs_id })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || "Failed to load family members");
+        const members = data.members.filter(m => m.prsId !== decoded.prs_id);
+        setFamilyMembers(members);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      }
+    })();
 
+    // Fetch vaccination records
     (async () => {
       try {
         const res = await fetch("/api/getUserVaccRecord", {
@@ -80,6 +102,45 @@ export default function UserDashboard() {
     window.open(url, '_blank');
   };
 
+  const formatDate = (dateStr) => {
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleFamilyChange = (e) => {
+    const { name, value } = e.target;
+    setFamilyForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const submitFamilyMember = async () => {
+    setFamilyMessage("");
+    const token = localStorage.getItem("prsToken");
+    const payload = { prsId, ...familyForm };
+    try {
+      const res = await fetch("/api/addFamilyMember", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFamilyMessage(`Family member added: ${data.prsId}`);
+        setFamilyForm({ nationalId: "", name: "", dob: "", address: "", userType: "individual" });
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      setFamilyMessage(`Error: ${err.message}`);
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <Sidebar />
@@ -88,7 +149,6 @@ export default function UserDashboard() {
         {error && <p className="error-msg">{error}</p>}
 
         <section className="dashboard-grid">
-
           <div className="dashboard-card id-card">
             <div className="id-photo">
               <FaUser size={48} color="#777" />
@@ -97,7 +157,23 @@ export default function UserDashboard() {
               <h4>PRS Identity Card</h4>
               <p><strong>Name:</strong> {name}</p>
               <p><strong>PRS ID:</strong> {prsId}</p>
+              <p><strong>Date of Birth:</strong> {dob}</p>
             </div>
+          </div>
+
+          <div className="dashboard-card">
+            <h3>Family</h3>
+            {familyMembers.length === 0 ? (
+              <p>No family members.</p>
+            ) : (
+              <ul>
+                {familyMembers.map((member, idx) => (
+                  <li key={idx}>
+                    {member.name} — {member.prsId} — {formatDate(member.dob)}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="dashboard-card">
@@ -138,13 +214,43 @@ export default function UserDashboard() {
           </div>
 
           <div className="dashboard-card">
-            <h3>Purchase History</h3>
-            <ul>
-              {purchaseHistory.map((rec, idx) => (
-                <li key={idx}>{rec.date} — {rec.item} (x{rec.qty})</li>
-              ))}
-            </ul>
-            <button className="btn-secondary">View All</button>
+            <h3>Add Family Member</h3>
+            <input
+              name="nationalId"
+              value={familyForm.nationalId}
+              onChange={handleFamilyChange}
+              placeholder="National ID"
+            />
+            <input
+              name="name"
+              value={familyForm.name}
+              onChange={handleFamilyChange}
+              placeholder="Name"
+            />
+            <input
+              name="dob"
+              type="date"
+              value={familyForm.dob}
+              onChange={handleFamilyChange}
+            />
+            <input
+              name="address"
+              value={familyForm.address}
+              onChange={handleFamilyChange}
+              placeholder="Address"
+            />
+            <select
+              name="userType"
+              value={familyForm.userType}
+              onChange={handleFamilyChange}
+            >
+              <option value="individual">Individual</option>
+              <option value="child">Child</option>
+            </select>
+            <button className="btn-primary" onClick={submitFamilyMember}>
+              Add Member
+            </button>
+            {familyMessage && <p className="info-msg">{familyMessage}</p>}'
           </div>
 
           <div className="dashboard-card dashboard-fullwidth">
@@ -156,7 +262,7 @@ export default function UserDashboard() {
                 {vaccRecords.map((rec, idx) => (
                   <li key={idx} className="vacc-record-item">
                     <span className="record-prs">{rec.prsId}</span> —
-                    <span className="record-date"> {new Date(rec.date).toLocaleDateString()}</span> —
+                    <span className="record-date"> {formatDate(rec.date)}</span> —
                     <span className="record-vaccine"> {rec.vaccineName}</span> —
                     <span className="record-dose"> Dose {rec.dose}</span> —
                     <span className="record-verified">
@@ -167,7 +273,6 @@ export default function UserDashboard() {
               </ul>
             )}
           </div>
-
         </section>
       </main>
     </div>

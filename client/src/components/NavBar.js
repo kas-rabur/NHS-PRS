@@ -22,7 +22,7 @@ function Navbar() {
             to="/GovernmentDashboard"
             className={({ isActive }) => (isActive ? "active" : "")}
           >
-            Governent
+            Government
           </NavLink>
         </li>
         <li>
