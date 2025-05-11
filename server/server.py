@@ -141,6 +141,29 @@ def get_family_members():
         return jsonify({"error": "Family members not found"}), 404
     return jsonify(result), 200
 
+@app.route("/api/removeFamilyMember", methods=["POST"])
+def remove_family_member():
+    data = request.get_json() or {}
+    required_fields = ["prsId", "familyMemberId"]
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({
+            "success": False,
+            "error": f"Missing fields: {', '.join(missing)}"
+        }), 400
+
+    result = dblogic.remove_family_member(data["prsId"], data["familyMemberId"])
+    if result.get("success"):
+        return jsonify({
+            "success": True,
+            "message": "Family member removed",
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "error": result["error"]
+        }), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -99,8 +99,31 @@ export default function UserDashboard() {
 
   const openInMaps = (address) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
+  const removeFamilyMember = async (memberId) => {
+    const token = localStorage.getItem("prsToken");
+    try {
+      const res = await fetch("/api/removeFamilyMember", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({prsId: prsId, familyMemberId: memberId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFamilyMembers(prev => prev.filter(member => member.prsId !== memberId));
+        setFamilyMessage(`Family member removed: ${memberId}`);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      setFamilyMessage(`Error: ${err.message}`);
+    }
+  }
 
   const formatDate = (dateStr) => {
     try {
@@ -149,6 +172,7 @@ export default function UserDashboard() {
         {error && <p className="error-msg">{error}</p>}
 
         <section className="dashboard-grid">
+          {/* PRS ID Card */}
           <div className="dashboard-card id-card">
             <div className="id-photo">
               <FaUser size={48} color="#777" />
@@ -160,22 +184,32 @@ export default function UserDashboard() {
               <p><strong>Date of Birth:</strong> {dob}</p>
             </div>
           </div>
+          {/* Family Members */}
+          <div className="dashboard-card id-card">
+            <div className="id-details">
+              <h4>Family Members</h4>
+              {familyMembers.length === 0 ? (
+                <p>No family members.</p>
+              ) : (
+                <ul>
+                  {familyMembers.map(member => (
+                    <li key={member.prsId}>
+                      {member.name} — {member.prsId} — {formatDate(member.dob)}
+                      <button
+                        className="remove-button"
+                        onClick={() => removeFamilyMember(member.prsId)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
 
-          <div className="dashboard-card">
-            <h3>Family</h3>
-            {familyMembers.length === 0 ? (
-              <p>No family members.</p>
-            ) : (
-              <ul>
-                {familyMembers.map((member, idx) => (
-                  <li key={idx}>
-                    {member.name} — {member.prsId} — {formatDate(member.dob)}
-                  </li>
-                ))}
-              </ul>
-            )}
+                </ul>
+              )}
+            </div>
           </div>
 
+          {/* Critical Supplies */}
           <div className="dashboard-card">
             <h3>Locate Critical Supplies</h3>
             <input
@@ -196,6 +230,7 @@ export default function UserDashboard() {
             </button>
           </div>
 
+          {/* Nearest Suppliers */}
           <div className="dashboard-card">
             <h3>Find Nearest Suppliers</h3>
             <ul className="supplier-list">
@@ -213,6 +248,7 @@ export default function UserDashboard() {
             </ul>
           </div>
 
+          {/* Add Family Member Form */}
           <div className="dashboard-card">
             <h3>Add Family Member</h3>
             <input
@@ -250,9 +286,10 @@ export default function UserDashboard() {
             <button className="btn-primary" onClick={submitFamilyMember}>
               Add Member
             </button>
-            {familyMessage && <p className="info-msg">{familyMessage}</p>}'
+            {familyMessage && <p className="info-msg">{familyMessage}</p>}
           </div>
 
+          {/* Vaccination Records (full width) */}
           <div className="dashboard-card dashboard-fullwidth">
             <h3>Vaccination Records</h3>
             {vaccRecords.length === 0 ? (

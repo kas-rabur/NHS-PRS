@@ -265,4 +265,24 @@ def get_family_members(prs_id):
         cur.close()
         conn.close()
 
-    
+def remove_family_member(prs_id, family_member_prs_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "DELETE FROM [USER] WHERE PRS_Id = ? AND Family_ID = ?",
+            family_member_prs_id, prs_id
+        )
+        conn.commit()
+        return {"success": True}
+
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "error": str(e)}
+
+    finally:
+        cur.close()
+        conn.close()
