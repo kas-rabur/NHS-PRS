@@ -39,7 +39,15 @@ export default function LoginForm() {
       }
 
       login(result.token);
-      navigate("/userdashboard");
+
+      if (result.role_id === "merchant") {
+        navigate("/merchantdashboard");
+      } else if (result.role_id === "public_user") {
+        navigate("/userdashboard");
+      } else {
+        navigate("/");
+      }
+
     } catch (err) {
       setError(err.message);
     }
