@@ -363,6 +363,9 @@ def update_password(prs_id, old_password, new_password):
         conn.close()
 
 
+import pyodbc
+import datetime
+
 def get_allowed_critical_items(prs_id):
     conn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -371,81 +374,82 @@ def get_allowed_critical_items(prs_id):
     cur = conn.cursor()
 
     try:
-        cur.execute(
-            """
+        # find which weekday this user is allowed
+        cur.execute("""
             SELECT ps.Allowed_Day
             FROM [USER] u
             JOIN PURCHASE_SCHEDULE ps
               ON u.Schedule_ID = ps.Schedule_ID
             WHERE u.PRS_Id = ?
-        """,
-            (prs_id,),
-        )
+        """, (prs_id,))
         row = cur.fetchone()
         if not row:
             return {"success": False, "error": "User or schedule not found"}
 
         allowed_abbr = row[0].strip()[:3].capitalize()
-        today = datetime.date.today()
+
+        # compute week window, monday to monday, to make suer users can only buy on their allowed day and only once a week, then it resets
+        today         = datetime.date.today()
         start_of_week = today - datetime.timedelta(days=today.weekday())
+        next_monday   = start_of_week + datetime.timedelta(days=7)
 
         week_data = []
         for offset in range(7):
-            dt = start_of_week + datetime.timedelta(days=offset)
+            dt       = start_of_week + datetime.timedelta(days=offset)
             day_abbr = dt.strftime("%a")
 
             if day_abbr == allowed_abbr:
-                cur.execute(
-                    """
-                SELECT
-                    ci.Item_ID,
-                    ci.Item_Name,
-                    ci.PurchaseLimit_Per_Day AS daily_limit,
-                    (SELECT ISNULL(SUM(pt.Quantity), 0)
-                    FROM PURCHASE_TRANSACTION pt
-                    WHERE
-                        pt.PRS_Id = ?
-                        AND CAST(pt.Transaction_Date AS DATE) = ?
-                        AND pt.Item_ID = ci.Item_ID
-                    ) AS total_bought
-                FROM CRITICAL_ITEM ci
-                ORDER BY ci.Item_ID
-                """,
-                    (prs_id, dt),
-                )
+                # for the allowed day, sum all purchases within the weekly window
+                cur.execute("""
+                    SELECT
+                      ci.Item_ID,
+                      ci.Item_Name,
+                      ci.PurchaseLimit_Per_Day AS daily_limit,
+                      (
+                        SELECT ISNULL(SUM(pt.Quantity), 0)
+                        FROM PURCHASE_TRANSACTION pt
+                        WHERE
+                          pt.PRS_Id = ?
+                          AND pt.Transaction_Date >= ?
+                          AND pt.Transaction_Date <  ?
+                          AND pt.Item_ID        = ci.Item_ID
+                      ) AS total_bought
+                    FROM CRITICAL_ITEM ci
+                    ORDER BY ci.Item_ID
+                """, (prs_id, start_of_week, next_monday))
                 rows = cur.fetchall()
 
                 items = [
                     {
-                        "item_id": item_id,
-                        "item_name": name,
-                        "daily_limit": limit_per_day,
-                        "total_bought": total,
+                        "item_id":        item_id,
+                        "item_name":      name,
+                        "daily_limit":    limit_per_day,
+                        "total_bought":   total
                     }
                     for item_id, name, limit_per_day, total in rows
                 ]
             else:
-                cur.execute(
-                    "SELECT Item_ID, Item_Name, PurchaseLimit_Per_Day FROM CRITICAL_ITEM ORDER BY Item_ID"
-                )
+                cur.execute("""
+                    SELECT Item_ID, Item_Name, PurchaseLimit_Per_Day
+                    FROM CRITICAL_ITEM
+                    ORDER BY Item_ID
+                """)
                 items = [
                     {
-                        "item_id": iid,
-                        "item_name": nm,
-                        "daily_limit": limit_per_day,
-                        "total_bought": 0,
+                        "item_id":      iid,
+                        "item_name":    nm,
+                        "daily_limit":  limit_per_day,
+                        "total_bought": 0
                     }
                     for iid, nm, limit_per_day in cur.fetchall()
                 ]
 
-            week_data.append(
-                {
-                    "date": dt.isoformat(),
-                    "day": day_abbr,
-                    "allowed": day_abbr == allowed_abbr,
-                    "items": items,
-                }
-            )
+            week_data.append({
+                "date":    dt.isoformat(),
+                "day":     day_abbr,
+                "allowed": day_abbr == allowed_abbr,
+                "items":   items
+            })
 
         return {"success": True, "data": week_data}
 
@@ -485,4 +489,4 @@ def get_allowed_day(prs_id):
 
 
 if __name__ == "__main__":
-    print(get_allowed_day("PRS_000013"))
+    print(get_allowed_critical_items("PRS_000013"))
