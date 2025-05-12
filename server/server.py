@@ -213,6 +213,36 @@ def update_password_route():
         return jsonify(success=True, message="Password updated"), 200
     return jsonify(success=False, error=result["error"]), 400
 
+@app.route("/api/get_allowed_critical_items", methods=["POST"])
+def get_allowed_critical_items():
+    data = request.get_json() or {}
+    required = ["prsId"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return (
+            jsonify(success=False, error=f"Missing fields: {', '.join(missing)}"),
+            400,
+        )
+
+    result = dblogic.get_allowed_critical_items(data["prsId"])
+    if result.get("success"):
+        return jsonify(success=True, items=result["data"]), 200
+
+    return jsonify(success=False, error=result["error"]), 400
+
+@app.route("/api/get_allowed_day", methods=["POST"])
+def get_allowed_day_route():
+    payload = request.get_json() or {}
+    prs_id = payload.get("prsId")
+    if not prs_id:
+        return jsonify(success=False, error="Missing field: prsId"), 400
+
+    result = dblogic.get_allowed_day(prs_id)
+    if result["success"]:
+        return jsonify(success=True, allowedDay=result["data"]), 200
+    else:
+        return jsonify(success=False, error=result["error"]), 404
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

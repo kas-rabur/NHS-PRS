@@ -1,4 +1,5 @@
 /* src/css/UserDashboard.css */
+
 .dashboard-container {
   display: flex;
   height: 100vh;
@@ -66,7 +67,6 @@
   max-width: 800px;
   margin: 0 auto;
 }
-
 
 /* Tab buttons */
 .button-group {
@@ -222,6 +222,7 @@
   }
 }
 
+/* Calendar styles */
 .calendar-card {
   padding: 1rem;
   background: #ffffff;
@@ -242,15 +243,16 @@
   gap: 0.5rem;
 }
 
+/* Center the day label */
 .calendar-cell {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }
 
-.calendar-day,
-.calendar-empty-box {
+.calendar-day {
   padding: 2rem 0;
+  width: 100%;
   text-align: center;
   font-weight: 500;
   border-radius: 0.5rem;
@@ -259,14 +261,28 @@
   cursor: default;
 }
 
-.calendar-day:hover,
-.calendar-empty-box:hover {
+.calendar-day:hover {
   background: #e0e0e0;
   transform: translateY(-2px);
 }
 
+/* Highlight today */
 .calendar-day.today {
   background: #4f46e5;
   color: #fff;
   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+/* Highlight allowed day */
+.calendar-day.allowed {
+  background: #facc15;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(250, 204, 21, 0.3);
+}
+
+/* If today is also the allowed day */
+.calendar-day.today.allowed {
+  background: #10b981;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
