@@ -1,6 +1,7 @@
 import pyodbc
 import bcrypt
 import datetime
+import json
 
 
 def login_user(data):
@@ -363,9 +364,6 @@ def update_password(prs_id, old_password, new_password):
         conn.close()
 
 
-import pyodbc
-import datetime
-
 def get_allowed_critical_items(prs_id):
     conn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -487,6 +485,55 @@ def get_allowed_day(prs_id):
         cur.close()
         conn.close()
 
+def save_vaccination_bundle(prs_id, bundle):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        for entry in bundle.get("entry", []):
+            resource = entry.get("resource", {})
+            if resource.get("resourceType") != "Immunization":
+                continue
+
+            vaccine = (
+                resource.get("vaccineCode", {})
+                        .get("coding", [{}])[0]
+                        .get("display", "")
+            )
+            dose = str(
+                resource.get("protocolApplied", [{}])[0]
+                        .get("doseNumberPositiveInt", "")
+            )
+            occurrence = resource.get("occurrenceDateTime", "")
+            vaccination_date = occurrence.split("T")[0] if occurrence else None
+            payload = json.dumps(resource)
+
+            cur.execute(
+                """
+                INSERT INTO VACCINATION_RECORD
+                  (PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified, Payload)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                prs_id,
+                vaccine,
+                dose,
+                vaccination_date,
+                1,
+                payload,
+            )
+
+        conn.commit()
+        return True, None
+
+    except Exception as e:
+        conn.rollback()
+        return False, str(e)
+
+    finally:
+        cur.close()
+        conn.close()
 
 if __name__ == "__main__":
     print(get_allowed_critical_items("PRS_000013"))

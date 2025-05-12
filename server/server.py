@@ -242,7 +242,22 @@ def get_allowed_day_route():
         return jsonify(success=True, allowedDay=result["data"]), 200
     else:
         return jsonify(success=False, error=result["error"]), 404
+    
+@app.route("/api/upload_vaccination", methods=["POST"])
+def upload_vaccination():
+    bundle = request.get_json()
+    if not bundle:
+        return jsonify(success=False, error="No JSON provided"), 400
 
+    prs_id = bundle.get("prsId")
+    if not prs_id:
+        return jsonify(success=False, error="Missing prsId"), 400
+
+    success, error = dblogic.save_vaccination_bundle(prs_id, bundle)
+    if not success:
+        return jsonify(success=False, error=error), 500
+
+    return jsonify(success=True), 200
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -1,0 +1,68 @@
+{
+    "resourceType": "Bundle",
+    "type": "searchset",
+    "entry": [
+        {
+            "resource": {
+                "resourceType": "Immunization",
+                "vaccineCode": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "39114911000001105",
+                            "display": "COVID-19 Vaccine AstraZeneca"
+                        }
+                    ]
+                },
+                "protocolApplied": [
+                    {
+                        "doseNumberPositiveInt": 1
+                    }
+                ],
+                "occurrenceDateTime": "2020-12-10T13:00:08.476000+00:00",
+                "patient": {
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "PRS_000013"
+                    }
+                },
+                "status": "completed",
+                "lotNumber": "R04X",
+                "manufacturer": {
+                    "display": "AstraZeneca Ltd"
+                }
+            }
+        },
+        {
+            "resource": {
+                "resourceType": "Immunization",
+                "vaccineCode": {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "39114911000001105",
+                            "display": "COVID-19 Vaccine AstraZeneca"
+                        }
+                    ]
+                },
+                "protocolApplied": [
+                    {
+                        "doseNumberPositiveInt": 2
+                    }
+                ],
+                "occurrenceDateTime": "2021-04-05T10:15:00+00:00",
+                "patient": {
+                    "identifier": {
+                        "system": "https://fhir.nhs.uk/Id/nhs-number",
+                        "value": "PRS_000013"
+                    }
+                },
+                "status": "completed",
+                "lotNumber": "CD5678",
+                "manufacturer": {
+                    "display": "AstraZeneca Ltd"
+                }
+            }
+        }
+    ]
+}
