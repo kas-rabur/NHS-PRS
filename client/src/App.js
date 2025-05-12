@@ -19,7 +19,7 @@ import MerchantDashboard from "./components/MerchantDashboard";
 
 function App() {
   const location = useLocation();
-  const excludedRoutes = ["/login", "/register"];
+  const excludedRoutes = [];
 
   return (
     <div>
