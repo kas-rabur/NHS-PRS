@@ -1,6 +1,3 @@
-/*
-Updated App.js: moved lazy imports to top-level and wrapped in Suspense for proper code-splitting without inlining imports in JSX.
-*/
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/NavBar";
@@ -17,14 +14,12 @@ import CustomerDashboard from "./components/UserDashboard";
 import ProfilePage from "./components/ProfilePage";
 import SuppliersPage from "./components/SuppliersPage";
 import RecordsPage from "./components/RecordsPage";
-
-// Lazy-loaded dashboards
-const GovernmentDashboard = React.lazy(() => import("./components/GovernmentDashboard"));
-const MerchantDashboard = React.lazy(() => import("./components/MerchantDashboard"));
+import GovernmentDashboard from "./components/GovernmentDashboard";
+import MerchantDashboard from "./components/MerchantDashboard";
 
 function App() {
   const location = useLocation();
-  const excludedRoutes = ["/", "/login", "/register"];
+  const excludedRoutes = ["/login", "/register"];
 
   return (
     <div>
