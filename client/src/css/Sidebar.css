@@ -96,3 +96,28 @@
 .logout-item {
   padding-top:350px;
 }
+
+.logout-button {
+  all: unset;
+  cursor: pointer;
+}
+
+
+.sidebar ul li .logout-button {
+  font-size: 0.8rem;
+  width: 80%;
+  font-weight: 500;
+  color: #333;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.sidebar ul li .logout-button:hover {
+  background-color: #f4f4f4;
+  color: #0153ce;
+  transform: translateX(5px);
+}
