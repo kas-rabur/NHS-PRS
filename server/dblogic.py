@@ -17,7 +17,7 @@ def login_user(data):
     try:
         # Fetch stored hash and user info
         cur.execute(
-            "SELECT Password_Hash, PRS_Id, Role_ID, Name, DateOfBirth, User_Type "
+            "SELECT Password_Hash, PRS_Id, Role_ID, Name, DateOfBirth, User_Type, Merchant_ID "
             "FROM [USER] WHERE National_Identifier = ?",
             national_id,
         )
@@ -25,7 +25,7 @@ def login_user(data):
         if not row:
             return {"success": False, "error": "Invalid credentials."}
 
-        stored_hash, prs_id, role_id, name, DateOfBirth, user_type = row
+        stored_hash, prs_id, role_id, name, DateOfBirth, user_type, merchant_id = row
 
         dob_str = DateOfBirth.strftime("%d/%m/%Y")
         print("login row: ", row)
@@ -40,6 +40,8 @@ def login_user(data):
             "name": name,
             "dob": dob_str,
             "userType": user_type,
+            "merchantId": merchant_id,
+
         }
 
     except Exception as e:
@@ -606,15 +608,20 @@ def get_stock_levels(merchant_id):
     cur = conn.cursor()
     try:
         cur.execute("""
-            SELECT ci.Item_Name, inv.Stock_Quantity, inv.LastUpdated
-            FROM INVENTORY inv
-            JOIN STORE st          ON inv.Store_ID = st.Store_ID
-            JOIN CRITICAL_ITEM ci  ON inv.Item_ID = ci.Item_ID
-            WHERE st.Merchant_ID = ?
+            SELECT ci.Item_ID, ci.Item_Name, inv.Stock_Quantity, inv.LastUpdated
+              FROM INVENTORY inv
+              JOIN STORE st          ON inv.Store_ID = st.Store_ID
+              JOIN CRITICAL_ITEM ci  ON inv.Item_ID = ci.Item_ID
+             WHERE st.Merchant_ID = ?
         """, (merchant_id,))
         return [
-            {"name": name, "quantity": qty, "updated": updated}
-            for name, qty, updated in cur.fetchall()
+            {
+                "item_id":     item_id,
+                "name":        name,
+                "quantity":    qty,
+                "lastUpdated": updated
+            }
+            for item_id, name, qty, updated in cur.fetchall()
         ]
     finally:
         cur.close()
@@ -677,18 +684,50 @@ def get_vaccination_stats(_merchant_id=None):
         cur.close()
         conn.close()
 
+def update_stock_by_name(merchant_id, item_id, new_quantity):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            UPDATE inv
+               SET inv.Stock_Quantity = ?,
+                   inv.LastUpdated    = GETDATE()
+            FROM INVENTORY inv
+            JOIN STORE s
+              ON inv.Store_ID = s.Store_ID
+            WHERE s.Merchant_ID = ?
+              AND inv.Item_ID    = ?
+            """,
+            (new_quantity, merchant_id, item_id),
+        )
+        if cur.rowcount == 0:
+            return {"success": False, "error": "No matching inventory record found for that merchant and item"}
+        conn.commit()
+        return {"success": True}
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "error": str(e)}
+    finally:
+        cur.close()
+        conn.close()
 
 if __name__ == "__main__":
     # Use a PRS_Id for the PRS‐based functions:
-    test_prs_id     = "PRS_000015"
+    test_prs_id     = "PRS_000014"
     # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
     test_merchant_id = "MER001"
 
-    print("get_merchant_id:", get_merchant_id(test_prs_id))
-    print("get_total_sales_and_orders:", get_total_sales_and_orders(test_merchant_id))
-    print("get_active_product_count:", get_active_product_count(test_merchant_id))
-    print("get_stock_levels:", get_stock_levels(test_merchant_id))
-    print("get_purchase_restrictions:", get_purchase_restrictions(test_prs_id))
-    print("get_vaccination_stats:", get_vaccination_stats(test_merchant_id))
+    # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
+    print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
+    # print("get_merchant_id:", get_merchant_id(test_prs_id))
+    # print("get_total_sales_and_orders:", get_total_sales_and_orders(test_merchant_id))
+    # print("get_active_product_count:", get_active_product_count(test_merchant_id))
+    # print("get_stock_levels:", get_stock_levels(test_merchant_id))
+    # print("get_purchase_restrictions:", get_purchase_restrictions(test_prs_id))
+    # print("get_vaccination_stats:", get_vaccination_stats(test_merchant_id))
     # If you still have the old helper:
     # print("get_allowed_critical_items:", get_allowed_critical_items(test_prs_id))

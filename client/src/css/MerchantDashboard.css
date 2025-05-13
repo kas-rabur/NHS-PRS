@@ -1,52 +1,75 @@
-.home {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background-color: #f0f0f0;
-    padding: 15px;
-    min-height: 100vh;
-  }
-  .cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px; 
-    width: 100%;
-    padding: 5px;
-  }
-  
-  
-  .topbar-home{
-    grid-column: 1/-1;
-    grid-row: 1;
-  }
-  .card-home{
-    grid-row: 2;
-  }
-  .content-wrapper {
-    display: flex;
-    gap: 20px;
-    width: 100%;
-  }
-  
-  .sidebar {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 200px;
-    height: 100%;
-    min-height: 600px;
-    margin-left: 25px;
-    margin-top: 20px;
-  }
-  
-  /* .cards-box {
-    flex-grow: 1;
-    padding: 20px;
-  
-  } */
-  .dashboard-full {
-  flex: 1 1 100%;
+
+.dashboard-card.dashboard-full {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   margin-top: 1.5rem;
 }
+
+.supplies-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.supplies-table th,
+.supplies-table td {
+  border: 1px solid #eee;
+  padding: 0.75rem 1rem;
+}
+
+.supplies-table th {
+  background: #f9fafb;
+  text-align: left;
+  font-weight: 600;
+}
+
+.qty-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+
+.btn-qty {
+  background-color: #0153ce;
+  border: none;
+  color: #fff;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 10px;
+}
+
+.btn-qty:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.btn-qty:not(:disabled):hover {
+  background-color: #136ff8;
+}
+
+
+.dashboard-card.dashboard-full .qty-controls .qty-input {
+  width: 3rem !important;      
+  min-width: 3rem !important;  
+  line-height: 2rem !important;
+  text-align: center !important;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  padding: 0.125rem;          
+  font-size: 1rem;
+  background-color: #f9fafb;
+  cursor: default;
+}
+
+.supplies-table td:last-child {
+  width: 6rem;
+}
+

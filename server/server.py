@@ -44,6 +44,7 @@ def login():
         "role": result["roleId"],
         "name": result["name"],
         "DOB": result["dob"],
+        "merchantId": result["merchantId"],
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=6),
     }
     print("Payload: ", payload)
@@ -286,6 +287,17 @@ def merchant_dashboard_data():
         "vaccinationStats":     vaccination_stats
     }), 200
 
+@app.route("/api/merchant/update-stock", methods=["POST"])
+def update_stock_route():
+    data = request.get_json() or {}
+    merchant_id = data.get("merchantId")
+    item_name   = data.get("itemId")
+    new_quantity= data.get("newQuantity")
+
+    result = dblogic.update_stock_by_name(merchant_id, item_name, new_quantity)
+    status = 200 if result.get("success") else 400
+    return jsonify(result), status
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+    
