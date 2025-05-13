@@ -259,5 +259,33 @@ def upload_vaccination():
 
     return jsonify(success=True), 200
 
+
+@app.route("/api/merchant/dashboard-data", methods=["POST"])
+def merchant_dashboard_data():
+    data = request.get_json() or {}
+    prs_id = data.get("prsId")
+    if not prs_id:
+        return jsonify({"error": "Missing field: prsId"}), 400
+
+    merchant_id = dblogic.get_merchant_id(prs_id)
+    if merchant_id is None:
+        return jsonify({"error": "Not a merchant-linked account"}), 403
+
+    sales_orders      = dblogic.get_total_sales_and_orders(merchant_id)
+    product_count     = dblogic.get_active_product_count(merchant_id)
+    stock_levels      = dblogic.get_stock_levels(merchant_id)
+    restrictions      = dblogic.get_purchase_restrictions(prs_id)
+    vaccination_stats = dblogic.get_vaccination_stats(merchant_id)
+
+    return jsonify({
+        "sales":                sales_orders["sales"],
+        "orders":               sales_orders["orders"],
+        "products":             product_count,
+        "stockLevels":          stock_levels,
+        "purchaseRestrictions": restrictions,
+        "vaccinationStats":     vaccination_stats
+    }), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

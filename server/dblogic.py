@@ -535,5 +535,160 @@ def save_vaccination_bundle(prs_id, bundle):
         cur.close()
         conn.close()
 
+
+
+
+#new funcs
+def get_merchant_id(prs_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT Merchant_ID
+              FROM [USER]
+             WHERE PRS_Id = ?
+        """, (prs_id,))
+        row = cur.fetchone()
+
+        return row[0] if row and row[0] is not None else None
+    finally:
+        cur.close()
+        conn.close()
+
+def get_total_sales_and_orders(merchant_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT 
+              COUNT(*)      AS orders,
+              ISNULL(SUM(pt.Quantity), 0) AS total_units_sold
+            FROM PURCHASE_TRANSACTION pt
+            JOIN STORE st         ON pt.Store_ID = st.Store_ID
+            WHERE st.Merchant_ID = ? AND pt.Is_Valid = 1
+        """, (merchant_id,))
+        orders, total_units = cur.fetchone()
+        return {"orders": orders, "sales": total_units}
+    finally:
+        cur.close()
+        conn.close()
+
+def get_active_product_count(merchant_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT COUNT(DISTINCT inv.Item_ID)
+            FROM INVENTORY inv
+            JOIN STORE st ON inv.Store_ID = st.Store_ID
+            WHERE st.Merchant_ID = ?
+        """, (merchant_id,))
+        (count,) = cur.fetchone()
+        return count
+    finally:
+        cur.close()
+        conn.close()
+
+def get_stock_levels(merchant_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT ci.Item_Name, inv.Stock_Quantity, inv.LastUpdated
+            FROM INVENTORY inv
+            JOIN STORE st          ON inv.Store_ID = st.Store_ID
+            JOIN CRITICAL_ITEM ci  ON inv.Item_ID = ci.Item_ID
+            WHERE st.Merchant_ID = ?
+        """, (merchant_id,))
+        return [
+            {"name": name, "quantity": qty, "updated": updated}
+            for name, qty, updated in cur.fetchall()
+        ]
+    finally:
+        cur.close()
+        conn.close()
+
+def get_purchase_restrictions(prs_id):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT
+              ci.Item_Name,
+              COALESCE(ci.PurchaseLimit_Per_Day, ci.PurchaseLimit_Per_Week, 0) AS limit,
+              CASE 
+                WHEN ci.PurchaseLimit_Per_Day IS NOT NULL THEN 'day'
+                ELSE 'week'
+              END AS window,
+              ps.Allowed_Day AS schedule
+            FROM CRITICAL_ITEM ci
+            CROSS JOIN (
+              SELECT ps.Allowed_Day
+              FROM [USER] u
+              JOIN PURCHASE_SCHEDULE ps 
+                ON u.Schedule_ID = ps.Schedule_ID
+              WHERE u.PRS_Id = ?
+            ) ps
+        """, (prs_id,))
+        return [
+            {"item": item, "limit": limit, "window": window, "schedule": schedule}
+            for item, limit, window, schedule in cur.fetchall()
+        ]
+    finally:
+        cur.close()
+        conn.close()
+
+def get_vaccination_stats(_merchant_id=None):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT
+              COUNT(*)                                AS total,
+              SUM(CASE WHEN Verified = 1 THEN 1 ELSE 0 END) AS verified,
+              SUM(CASE WHEN Verified = 0 THEN 1 ELSE 0 END) AS pending
+            FROM VACCINATION_RECORD
+        """)
+        total, verified, pending = cur.fetchone()
+        return {
+            "totalRecords": total or 0,
+            "verified":     verified or 0,
+            "pending":      pending or 0
+        }
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
-    print(get_allowed_critical_items("PRS_000013"))
+    # Use a PRS_Id for the PRS‐based functions:
+    test_prs_id     = "PRS_000015"
+    # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
+    test_merchant_id = "MER001"
+
+    print("get_merchant_id:", get_merchant_id(test_prs_id))
+    print("get_total_sales_and_orders:", get_total_sales_and_orders(test_merchant_id))
+    print("get_active_product_count:", get_active_product_count(test_merchant_id))
+    print("get_stock_levels:", get_stock_levels(test_merchant_id))
+    print("get_purchase_restrictions:", get_purchase_restrictions(test_prs_id))
+    print("get_vaccination_stats:", get_vaccination_stats(test_merchant_id))
+    # If you still have the old helper:
+    # print("get_allowed_critical_items:", get_allowed_critical_items(test_prs_id))
