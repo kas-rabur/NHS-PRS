@@ -807,11 +807,11 @@ def get_all_vaccination_records():
 
 if __name__ == "__main__":
     # Use a PRS_Id for the PRS‐based functions:
-    test_prs_id     = "PRS_000015"
+    test_prs_id     = "PRS_000013"
     # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
     test_merchant_id = "MER001"
 
-    # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
+    print("get allowed critical items", get_allowed_critical_items(test_prs_id))
     # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
     # print("get_merchant_id:", get_merchant_id(test_prs_id))
     # print("get all vaccination records:", get_all_vaccination_records())
