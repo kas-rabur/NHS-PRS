@@ -731,40 +731,45 @@ def update_stock_by_name(merchant_id, item_id, new_quantity):
         cur.close()
         conn.close()
 
-def update_verify_record(prs_id, record_id, verified_status):
+
+def update_verify_record(record_id, verified_status):
     conn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};"
         "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
     )
     cur = conn.cursor()
     try:
-        if verified_status == 1:
-            cur.execute(
-                """
-                UPDATE VACCINATION_RECORD
-                SET Verified = 1
-                WHERE Record_ID = ?
-                """,
-                (record_id),
-            )
-        elif verified_status == 0:
-            cur.execute(
-                """
-                UPDATE VACCINATION_RECORD
-                SET Verified = 0
-                WHERE Record_ID = ?
-                """,
-                (record_id),
-            )
+        cur.execute(
+            """
+            UPDATE VACCINATION_RECORD
+            SET Verified = ?
+            WHERE Record_ID = ?
+            """,
+            (int(verified_status), record_id), 
+        )
 
-        if cur.rowcount == 0:
-            return {"success": False, "error": "No matching vaccination record found"}
+        rows_updated = cur.rowcount
+        if rows_updated == 0:
+            conn.rollback()
+            return {
+                "success": False,
+                "error": "No matching vaccination record found for Record_ID",
+                "rows_updated": 0
+            }
+
         conn.commit()
-        return {"success": True}
-    
+        return {
+            "success": True,
+            "rows_updated": rows_updated
+        }
+
     except Exception as e:
         conn.rollback()
-        return {"success": False, "error": str(e)}
+        return {
+            "success": False,
+            "error": str(e),
+        }
+
     finally:
         cur.close()
         conn.close()
@@ -808,8 +813,8 @@ if __name__ == "__main__":
 
     # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
     # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
-    print("get_merchant_id:", get_merchant_id(test_prs_id))
-    print("get all vaccination records:", get_all_vaccination_records())
+    # print("get_merchant_id:", get_merchant_id(test_prs_id))
+    # print("get all vaccination records:", get_all_vaccination_records())
     # print("get_total_sales_and_orders:", get_total_sales_and_orders(test_merchant_id))
     # print("get_active_product_count:", get_active_product_count(test_merchant_id))
     # print("get_stock_levels:", get_stock_levels(test_merchant_id))

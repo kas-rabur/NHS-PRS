@@ -326,9 +326,7 @@ def update_verify_record():
             400,
         )
 
-    result = dblogic.update_verify_record(
-        data["prsId"], data["recordID"], data["verified_status"]
-    )
+    result = dblogic.update_verify_record( data["recordID"], data["verified_status"])
     if result.get("success"):
         return (
             jsonify(
