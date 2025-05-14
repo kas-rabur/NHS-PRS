@@ -13,6 +13,8 @@ import {
   FaBoxOpen,
   FaCheckCircle,
   FaTimesCircle,
+  FaPlus, 
+  FaMinus
 } from "react-icons/fa";
 
 export default function MerchantDashboard() {
@@ -274,13 +276,13 @@ export default function MerchantDashboard() {
                     <tr key={item.item_id}>
                       <td>{item.name}</td>
                       <td>
-                        <button onClick={() => handleIncrement(idx)} disabled={item.saving}>+</button>
+                        <button onClick={() => handleIncrement(idx)} disabled={item.saving}><FaPlus/></button>
                         <input type="number" value={item.editedQuantity} readOnly />
-                        <button onClick={() => handleDecrement(idx)} disabled={item.saving || item.editedQuantity <= 0}>–</button>
+                        <button onClick={() => handleDecrement(idx)} disabled={item.saving || item.editedQuantity <= 0}><FaMinus/></button>
                       </td>
                       <td>{new Date(item.lastUpdated).toLocaleString()}</td>
                       <td>
-                        <button onClick={() => handleSave(idx)} disabled={item.saving}>
+                        <button className="btn-primary" onClick={() => handleSave(idx)} disabled={item.saving}>
                           {item.saving ? "Saving..." : "Save"}
                         </button>
                       </td>

@@ -791,35 +791,35 @@ def update_verify_record(record_id, verified_status):
         client.close()
 
 
-def get_all_vaccination_records():
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
-    )
-    cur = conn.cursor()
-    try:
-        cur.execute(
-            """
-            SELECT Record_ID, PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified
-            FROM VACCINATION_RECORD
-            """,
-        )
-        rows = cur.fetchall()
-        print("Vaccination records: ", rows)
-        return [
-            {
-                "recordId": recordID,
-                "id": id,
-                "vaccineName": name,
-                "dose": dose,
-                "vaccinationDate": date,
-                "verified": verified,
-            }
-            for recordID, id, name, dose, date, verified in rows
-        ]
-    finally:
-        cur.close()
-        conn.close()
+# def get_all_vaccination_records():
+#     conn = pyodbc.connect(
+#         "DRIVER={ODBC Driver 17 for SQL Server};"
+#         "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+#     )
+#     cur = conn.cursor()
+#     try:
+#         cur.execute(
+#             """
+#             SELECT Record_ID, PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified
+#             FROM VACCINATION_RECORD
+#             """,
+#         )
+#         rows = cur.fetchall()
+#         print("Vaccination records: ", rows)
+#         return [
+#             {
+#                 "recordId": recordID,
+#                 "id": id,
+#                 "vaccineName": name,
+#                 "dose": dose,
+#                 "vaccinationDate": date,
+#                 "verified": verified,
+#             }
+#             for recordID, id, name, dose, date, verified in rows
+#         ]
+#     finally:
+#         cur.close()
+#         conn.close()
 
 
 # --------------------MONGO--------------------
