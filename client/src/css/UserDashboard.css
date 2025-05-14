@@ -59,6 +59,7 @@
   justify-content: center;
   border-left: 5px solid #0153ce;
   text-align: center;
+  line-height: 0.5;
 }
 
 /* Update section card */

@@ -554,8 +554,24 @@ def get_merchant_id(prs_id):
              WHERE PRS_Id = ?
         """, (prs_id,))
         row = cur.fetchone()
+        
+        merchant_id = row[0] if row else None
 
-        return row[0] if row and row[0] is not None else None
+        cur.execute("""
+            SELECT Business_License_Number, Name, Registration_Info
+                    FROM MERCHANT
+                    WHERE Merchant_ID = ?
+        """, (merchant_id,))
+        row = cur.fetchone()
+        business_license, name, registration_info = row 
+        if not row:
+            return {"success": False, "error": "Merchant not found."}
+        return {
+            "merchantId": merchant_id,
+            "businessLicense": business_license,
+            "name": name,
+            "registrationInfo": registration_info
+        }
     finally:
         cur.close()
         conn.close()
@@ -715,15 +731,85 @@ def update_stock_by_name(merchant_id, item_id, new_quantity):
         cur.close()
         conn.close()
 
+def update_verify_record(prs_id, record_id, verified_status):
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        if verified_status == 1:
+            cur.execute(
+                """
+                UPDATE VACCINATION_RECORD
+                SET Verified = 1
+                WHERE Record_ID = ?
+                """,
+                (record_id),
+            )
+        elif verified_status == 0:
+            cur.execute(
+                """
+                UPDATE VACCINATION_RECORD
+                SET Verified = 0
+                WHERE Record_ID = ?
+                """,
+                (record_id),
+            )
+
+        if cur.rowcount == 0:
+            return {"success": False, "error": "No matching vaccination record found"}
+        conn.commit()
+        return {"success": True}
+    
+    except Exception as e:
+        conn.rollback()
+        return {"success": False, "error": str(e)}
+    finally:
+        cur.close()
+        conn.close()
+
+def get_all_vaccination_records():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT Record_ID, PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified
+            FROM VACCINATION_RECORD
+            """,
+        )
+        rows = cur.fetchall()
+        print("Vaccination records: ", rows)
+        return [
+            {
+                "recordId":       recordID,
+                "id":              id,
+                "vaccineName":     name,
+                "dose":           dose,
+                "vaccinationDate": date,
+                "verified":       verified,
+            }
+            for recordID, id, name, dose, date, verified in rows
+        ]
+    finally:
+        cur.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     # Use a PRS_Id for the PRS‐based functions:
-    test_prs_id     = "PRS_000014"
+    test_prs_id     = "PRS_000015"
     # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
     test_merchant_id = "MER001"
 
     # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
-    print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
-    # print("get_merchant_id:", get_merchant_id(test_prs_id))
+    # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
+    print("get_merchant_id:", get_merchant_id(test_prs_id))
+    print("get all vaccination records:", get_all_vaccination_records())
     # print("get_total_sales_and_orders:", get_total_sales_and_orders(test_merchant_id))
     # print("get_active_product_count:", get_active_product_count(test_merchant_id))
     # print("get_stock_levels:", get_stock_levels(test_merchant_id))

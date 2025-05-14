@@ -1,4 +1,3 @@
-
 .dashboard-card.dashboard-full {
   background: #fff;
   border-radius: 0.75rem;
@@ -31,7 +30,6 @@
   gap: 0.25rem;
 }
 
-
 .btn-qty {
   background-color: #0153ce;
   border: none;
@@ -55,7 +53,6 @@
   background-color: #136ff8;
 }
 
-
 .dashboard-card.dashboard-full .qty-controls .qty-input {
   width: 3rem !important;      
   min-width: 3rem !important;  
@@ -73,3 +70,50 @@
   width: 6rem;
 }
 
+
+.summary-cards {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+
+.summary-card {
+  flex: 1 1 12rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.summary-card .icon {
+  font-size: 2rem;
+  margin-right: 0.75rem;
+  color: #0153ce;
+}
+
+.summary-card .details {
+  flex: 1;
+}
+
+.summary-card .details h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #4a4a4a;
+}
+
+.summary-card .details p {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111;
+}

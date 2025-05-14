@@ -214,6 +214,7 @@ def update_password_route():
         return jsonify(success=True, message="Password updated"), 200
     return jsonify(success=False, error=result["error"]), 400
 
+
 @app.route("/api/get_allowed_critical_items", methods=["POST"])
 def get_allowed_critical_items():
     data = request.get_json() or {}
@@ -231,6 +232,7 @@ def get_allowed_critical_items():
 
     return jsonify(success=False, error=result["error"]), 400
 
+
 @app.route("/api/get_allowed_day", methods=["POST"])
 def get_allowed_day_route():
     payload = request.get_json() or {}
@@ -243,7 +245,8 @@ def get_allowed_day_route():
         return jsonify(success=True, allowedDay=result["data"]), 200
     else:
         return jsonify(success=False, error=result["error"]), 404
-    
+
+
 @app.route("/api/upload_vaccination", methods=["POST"])
 def upload_vaccination():
     bundle = request.get_json()
@@ -268,36 +271,96 @@ def merchant_dashboard_data():
     if not prs_id:
         return jsonify({"error": "Missing field: prsId"}), 400
 
-    merchant_id = dblogic.get_merchant_id(prs_id)
+    output = dblogic.get_merchant_id(prs_id)
+    merchant_id = output.get("merchantId")
+    business_license = output.get("businessLicense")
+    business_name = output.get("name")
+    registration_info = output.get("registrationInfo")
     if merchant_id is None:
         return jsonify({"error": "Not a merchant-linked account"}), 403
 
-    sales_orders      = dblogic.get_total_sales_and_orders(merchant_id)
-    product_count     = dblogic.get_active_product_count(merchant_id)
-    stock_levels      = dblogic.get_stock_levels(merchant_id)
-    restrictions      = dblogic.get_purchase_restrictions(prs_id)
+    sales_orders = dblogic.get_total_sales_and_orders(merchant_id)
+    product_count = dblogic.get_active_product_count(merchant_id)
+    stock_levels = dblogic.get_stock_levels(merchant_id)
+    restrictions = dblogic.get_purchase_restrictions(prs_id)
     vaccination_stats = dblogic.get_vaccination_stats(merchant_id)
 
-    return jsonify({
-        "sales":                sales_orders["sales"],
-        "orders":               sales_orders["orders"],
-        "products":             product_count,
-        "stockLevels":          stock_levels,
-        "purchaseRestrictions": restrictions,
-        "vaccinationStats":     vaccination_stats
-    }), 200
+    return (
+        jsonify(
+            {
+                "sales": sales_orders["sales"],
+                "orders": sales_orders["orders"],
+                "products": product_count,
+                "stockLevels": stock_levels,
+                "purchaseRestrictions": restrictions,
+                "vaccinationStats": vaccination_stats,
+                "business_info": output,
+            }
+        ),
+        200,
+    )
+
 
 @app.route("/api/merchant/update-stock", methods=["POST"])
 def update_stock_route():
     data = request.get_json() or {}
     merchant_id = data.get("merchantId")
-    item_name   = data.get("itemId")
-    new_quantity= data.get("newQuantity")
+    item_name = data.get("itemId")
+    new_quantity = data.get("newQuantity")
 
     result = dblogic.update_stock_by_name(merchant_id, item_name, new_quantity)
     status = 200 if result.get("success") else 400
     return jsonify(result), status
 
+
+@app.route("/api/merchant/updateVerifyRecord", methods=["POST"])
+def update_verify_record():
+    data = request.get_json() or {}
+    required_fields = ["prsId", "recordID", "verified_status"]
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return (
+            jsonify(
+                {"success": False, "error": f"Missing fields: {', '.join(missing)}"}
+            ),
+            400,
+        )
+
+    result = dblogic.update_verify_record(
+        data["prsId"], data["recordID"], data["verified_status"]
+    )
+    if result.get("success"):
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": "Verification record updated",
+                }
+            ),
+            200,
+        )
+    else:
+        return jsonify({"success": False, "error": result["error"]}), 500
+
+
+@app.route("/api/merchant/getAllVaccinationRecords", methods=["POST"])
+def get_all_vaccination_records():
+    try:
+        records = dblogic.get_all_vaccination_records()
+    except Exception as e:
+        return jsonify(success=False, error=str(e)), 500
+
+    return (
+        jsonify({
+            "success": True,
+            "message": "Vaccination records fetched",
+            "data": {
+                "records": records
+            }
+        }),
+        200,
+    )
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
-    
