@@ -6,7 +6,6 @@ import "../css/MerchantDashboard.css";
 import {
   FaUser,
   FaIdBadge,
-  FaFingerprint,
   FaCertificate,
   FaRegCalendarCheck,
   FaChartLine,
@@ -80,8 +79,9 @@ export default function MerchantDashboard() {
       })
       .then((payload) => {
         if (payload.success) {
+          console.log("Vaccination records:", payload.records);
           setAllVaxRecords(
-            payload.data.records.map((r) => ({ ...r, updating: false }))
+            payload.records.map((r) => ({ ...r, updating: false }))
           );
         }
       })
@@ -158,14 +158,9 @@ export default function MerchantDashboard() {
 
   const toggleVerify = (recordId, currentStatus) => {
     setAllVaxRecords((recs) =>
-      recs.map((r) =>
-        r.recordId === recordId ? { ...r, updating: true } : r
-      )
+      recs.map((r) => (r._id === recordId ? { ...r, updating: true } : r))
     );
     const newStatus = currentStatus ? 0 : 1;
-    console.log("Record ID:", recordId);
-    console.log("New status:", newStatus);
-    console.log("PRS ID:", prsId);
     fetch("http://localhost:5000/api/merchant/updateVerifyRecord", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -182,7 +177,7 @@ export default function MerchantDashboard() {
         }
         setAllVaxRecords((recs) =>
           recs.map((r) =>
-            r.recordId === recordId
+            r._id === recordId
               ? { ...r, verified: !!newStatus, updating: false }
               : r
           )
@@ -192,7 +187,7 @@ export default function MerchantDashboard() {
       .catch((err) => {
         setAllVaxRecords((recs) =>
           recs.map((r) =>
-            r.recordId === recordId ? { ...r, updating: false } : r
+            r._id === recordId ? { ...r, updating: false } : r
           )
         );
         alert("Failed to update record: " + err.message);
@@ -224,6 +219,7 @@ export default function MerchantDashboard() {
       <div className="dashboard-main">
         <Topbar title="Merchant Dashboard" />
 
+        {/* Merchant Info Card */}
         <div className="dashboard-card id-card">
           <FaUser size={48} />
           <h4>Merchant Information</h4>
@@ -236,10 +232,11 @@ export default function MerchantDashboard() {
             <p><FaRegCalendarCheck /> <strong>Registration Info:</strong> {business_info.registrationInfo}</p>
           </div>
           <div className="info-row single">
-            <p><FaFingerprint /> <strong>PRS ID:</strong> {prsId}</p>
+            <p><strong>PRS ID:</strong> {prsId}</p>
           </div>
         </div>
 
+        {/* Summary Cards */}
         <div className="summary-cards">
           {summaryCards.map(({ key, title, content, icon }) => (
             <div key={key} className="summary-card">
@@ -252,6 +249,7 @@ export default function MerchantDashboard() {
           ))}
         </div>
 
+        {/* Stock Levels */}
         <div className="dashboard-card dashboard-full">
           <h3
             className="collapsible-header"
@@ -261,79 +259,49 @@ export default function MerchantDashboard() {
             {showStock ? "▼" : "▲"} Current Stock Levels
           </h3>
           {showStock && (
-            <>
-              {stockLevels.length ? (
-                <table className="supplies-table">
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Last Updated</th>
-                      <th>Actions</th>
+            stockLevels.length ? (
+              <table className="supplies-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockLevels.map((item, idx) => (
+                    <tr key={item.item_id}>
+                      <td>{item.name}</td>
+                      <td>
+                        <button onClick={() => handleIncrement(idx)} disabled={item.saving}>+</button>
+                        <input type="number" value={item.editedQuantity} readOnly />
+                        <button onClick={() => handleDecrement(idx)} disabled={item.saving || item.editedQuantity <= 0}>–</button>
+                      </td>
+                      <td>{new Date(item.lastUpdated).toLocaleString()}</td>
+                      <td>
+                        <button onClick={() => handleSave(idx)} disabled={item.saving}>
+                          {item.saving ? "Saving..." : "Save"}
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {stockLevels.map((item, idx) => (
-                      <tr key={item.item_id}>
-                        <td>{item.name}</td>
-                        <td>
-                          <div className="qty-controls">
-                            <button
-                              onClick={() => handleIncrement(idx)}
-                              disabled={item.saving}
-                              className="btn-qty"
-                            >
-                              +
-                            </button>
-                            <input
-                              type="number"
-                              value={item.editedQuantity}
-                              readOnly
-                              className="qty-input"
-                            />
-                            <button
-                              onClick={() => handleDecrement(idx)}
-                              disabled={item.saving || item.editedQuantity <= 0}
-                              className="btn-qty"
-                            >
-                              –
-                            </button>
-                          </div>
-                        </td>
-                        <td>
-                          {new Date(item.lastUpdated).toLocaleString(undefined, {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => handleSave(idx)}
-                            className="btn-primary"
-                            disabled={item.saving}
-                          >
-                            {item.saving ? "Saving..." : "Save"}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No inventory data available.</p>
-              )}
-            </>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No inventory data available.</p>
+            )
           )}
         </div>
 
+        {/* Purchase Restrictions */}
         <div className="dashboard-card dashboard-full">
           <h3>Purchase Restrictions</h3>
           {purchaseRestrictions.length ? (
             <ul className="restriction-list">
               {purchaseRestrictions.map((r) => (
                 <li key={r.item}>
-                  {r.item}: max {r.limit}
-                  {r.window === "day" ? " per day" : " per week"} ({r.schedule})
+                  {r.item}: max {r.limit}{r.window === "day" ? " per day" : " per week"} ({r.schedule})
                 </li>
               ))}
             </ul>
@@ -342,6 +310,7 @@ export default function MerchantDashboard() {
           )}
         </div>
 
+        {/* Vaccination Summary */}
         <div className="dashboard-card dashboard-full">
           <h3>Vaccination Summary</h3>
           <div className="vax-stats">
@@ -351,6 +320,7 @@ export default function MerchantDashboard() {
           </div>
         </div>
 
+        {/* All Vaccination Records */}
         <div className="dashboard-card dashboard-full">
           <h3>All Vaccination Records</h3>
           {allVaxRecords.length ? (
@@ -368,9 +338,9 @@ export default function MerchantDashboard() {
               </thead>
               <tbody>
                 {allVaxRecords.map((rec) => (
-                  <tr key={rec.recordId}>
-                    <td>{rec.id}</td>
-                    <td>{rec.recordId}</td>
+                  <tr key={rec._id}>
+                    <td>{rec.prsId}</td>
+                    <td>{rec._id}</td>
                     <td>{rec.vaccineName}</td>
                     <td>{rec.dose}</td>
                     <td>{new Date(rec.vaccinationDate).toLocaleDateString()}</td>
@@ -380,10 +350,14 @@ export default function MerchantDashboard() {
                     <td>
                       <button
                         className="btn-primary"
-                        onClick={() => toggleVerify(rec.recordId, rec.verified)}
+                        onClick={() => toggleVerify(rec._id, rec.verified)}
                         disabled={rec.updating}
                       >
-                        {rec.updating ? "Updating..." : rec.verified ? "Un-Verify" : "Verify"}
+                        {rec.updating
+                          ? "Updating..."
+                          : rec.verified
+                            ? "Un-Verify"
+                            : "Verify"}
                       </button>
                     </td>
                   </tr>

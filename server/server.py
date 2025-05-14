@@ -343,21 +343,15 @@ def update_verify_record():
 
 @app.route("/api/merchant/getAllVaccinationRecords", methods=["POST"])
 def get_all_vaccination_records():
-    try:
-        records = dblogic.get_all_vaccination_records()
-    except Exception as e:
-        return jsonify(success=False, error=str(e)), 500
+    result = dblogic.get_all_vaccination_records_mongo()
+    if not result.get("success"):
+        return jsonify(success=False, error=result.get("error")), 500
 
-    return (
-        jsonify({
-            "success": True,
-            "message": "Vaccination records fetched",
-            "data": {
-                "records": records
-            }
-        }),
-        200,
-    )
+    return jsonify({
+        "success": True,
+        "records": result["records"]
+    }), 200
+
 
 
 if __name__ == "__main__":

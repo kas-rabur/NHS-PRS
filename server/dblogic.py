@@ -1,7 +1,9 @@
 import pyodbc
 import bcrypt
-import datetime
+from datetime import datetime
 import json
+from pymongo import MongoClient
+from bson import ObjectId
 
 
 def login_user(data):
@@ -41,7 +43,6 @@ def login_user(data):
             "dob": dob_str,
             "userType": user_type,
             "merchantId": merchant_id,
-
         }
 
     except Exception as e:
@@ -375,13 +376,16 @@ def get_allowed_critical_items(prs_id):
 
     try:
         # find which weekday this user is allowed
-        cur.execute("""
+        cur.execute(
+            """
             SELECT ps.Allowed_Day
             FROM [USER] u
             JOIN PURCHASE_SCHEDULE ps
               ON u.Schedule_ID = ps.Schedule_ID
             WHERE u.PRS_Id = ?
-        """, (prs_id,))
+        """,
+            (prs_id,),
+        )
         row = cur.fetchone()
         if not row:
             return {"success": False, "error": "User or schedule not found"}
@@ -389,18 +393,19 @@ def get_allowed_critical_items(prs_id):
         allowed_abbr = row[0].strip()[:3].capitalize()
 
         # compute week window, monday to monday, to make suer users can only buy on their allowed day and only once a week, then it resets
-        today         = datetime.date.today()
+        today = datetime.date.today()
         start_of_week = today - datetime.timedelta(days=today.weekday())
-        next_monday   = start_of_week + datetime.timedelta(days=7)
+        next_monday = start_of_week + datetime.timedelta(days=7)
 
         week_data = []
         for offset in range(7):
-            dt       = start_of_week + datetime.timedelta(days=offset)
+            dt = start_of_week + datetime.timedelta(days=offset)
             day_abbr = dt.strftime("%a")
 
             if day_abbr == allowed_abbr:
                 # for the allowed day, sum all purchases within the weekly window
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT
                       ci.Item_ID,
                       ci.Item_Name,
@@ -416,40 +421,46 @@ def get_allowed_critical_items(prs_id):
                       ) AS total_bought
                     FROM CRITICAL_ITEM ci
                     ORDER BY ci.Item_ID
-                """, (prs_id, start_of_week, next_monday))
+                """,
+                    (prs_id, start_of_week, next_monday),
+                )
                 rows = cur.fetchall()
 
                 items = [
                     {
-                        "item_id":        item_id,
-                        "item_name":      name,
-                        "daily_limit":    limit_per_day,
-                        "total_bought":   total
+                        "item_id": item_id,
+                        "item_name": name,
+                        "daily_limit": limit_per_day,
+                        "total_bought": total,
                     }
                     for item_id, name, limit_per_day, total in rows
                 ]
             else:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT Item_ID, Item_Name, PurchaseLimit_Per_Day
                     FROM CRITICAL_ITEM
                     ORDER BY Item_ID
-                """)
+                """
+                )
                 items = [
                     {
-                        "item_id":      iid,
-                        "item_name":    nm,
-                        "daily_limit":  limit_per_day,
-                        "total_bought": 0
+                        "item_id": iid,
+                        "item_name": nm,
+                        "daily_limit": limit_per_day,
+                        "total_bought": 0,
                     }
                     for iid, nm, limit_per_day in cur.fetchall()
                 ]
 
-            week_data.append({
-                "date":    dt.isoformat(),
-                "day":     day_abbr,
-                "allowed": day_abbr == allowed_abbr,
-                "items":   items
-            })
+            week_data.append(
+                {
+                    "date": dt.isoformat(),
+                    "day": day_abbr,
+                    "allowed": day_abbr == allowed_abbr,
+                    "items": items,
+                }
+            )
 
         return {"success": True, "data": week_data}
 
@@ -487,6 +498,7 @@ def get_allowed_day(prs_id):
         cur.close()
         conn.close()
 
+
 def save_vaccination_bundle(prs_id, bundle):
     conn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -501,12 +513,13 @@ def save_vaccination_bundle(prs_id, bundle):
 
             vaccine = (
                 resource.get("vaccineCode", {})
-                        .get("coding", [{}])[0]
-                        .get("display", "")
+                .get("coding", [{}])[0]
+                .get("display", "")
             )
             dose = str(
-                resource.get("protocolApplied", [{}])[0]
-                        .get("doseNumberPositiveInt", "")
+                resource.get("protocolApplied", [{}])[0].get(
+                    "doseNumberPositiveInt", ""
+                )
             )
             occurrence = resource.get("occurrenceDateTime", "")
             vaccination_date = occurrence.split("T")[0] if occurrence else None
@@ -538,9 +551,7 @@ def save_vaccination_bundle(prs_id, bundle):
         conn.close()
 
 
-
-
-#new funcs
+# new funcs
 def get_merchant_id(prs_id):
     conn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -548,33 +559,40 @@ def get_merchant_id(prs_id):
     )
     cur = conn.cursor()
     try:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT Merchant_ID
               FROM [USER]
              WHERE PRS_Id = ?
-        """, (prs_id,))
+        """,
+            (prs_id,),
+        )
         row = cur.fetchone()
-        
+
         merchant_id = row[0] if row else None
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT Business_License_Number, Name, Registration_Info
                     FROM MERCHANT
                     WHERE Merchant_ID = ?
-        """, (merchant_id,))
+        """,
+            (merchant_id,),
+        )
         row = cur.fetchone()
-        business_license, name, registration_info = row 
+        business_license, name, registration_info = row
         if not row:
             return {"success": False, "error": "Merchant not found."}
         return {
             "merchantId": merchant_id,
             "businessLicense": business_license,
             "name": name,
-            "registrationInfo": registration_info
+            "registrationInfo": registration_info,
         }
     finally:
         cur.close()
         conn.close()
+
 
 def get_total_sales_and_orders(merchant_id):
     conn = pyodbc.connect(
@@ -583,19 +601,23 @@ def get_total_sales_and_orders(merchant_id):
     )
     cur = conn.cursor()
     try:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT 
               COUNT(*)      AS orders,
               ISNULL(SUM(pt.Quantity), 0) AS total_units_sold
             FROM PURCHASE_TRANSACTION pt
             JOIN STORE st         ON pt.Store_ID = st.Store_ID
             WHERE st.Merchant_ID = ? AND pt.Is_Valid = 1
-        """, (merchant_id,))
+        """,
+            (merchant_id,),
+        )
         orders, total_units = cur.fetchone()
         return {"orders": orders, "sales": total_units}
     finally:
         cur.close()
         conn.close()
+
 
 def get_active_product_count(merchant_id):
     conn = pyodbc.connect(
@@ -604,17 +626,21 @@ def get_active_product_count(merchant_id):
     )
     cur = conn.cursor()
     try:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT COUNT(DISTINCT inv.Item_ID)
             FROM INVENTORY inv
             JOIN STORE st ON inv.Store_ID = st.Store_ID
             WHERE st.Merchant_ID = ?
-        """, (merchant_id,))
+        """,
+            (merchant_id,),
+        )
         (count,) = cur.fetchone()
         return count
     finally:
         cur.close()
         conn.close()
+
 
 def get_stock_levels(merchant_id):
     conn = pyodbc.connect(
@@ -623,25 +649,24 @@ def get_stock_levels(merchant_id):
     )
     cur = conn.cursor()
     try:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT ci.Item_ID, ci.Item_Name, inv.Stock_Quantity, inv.LastUpdated
               FROM INVENTORY inv
               JOIN STORE st          ON inv.Store_ID = st.Store_ID
               JOIN CRITICAL_ITEM ci  ON inv.Item_ID = ci.Item_ID
              WHERE st.Merchant_ID = ?
-        """, (merchant_id,))
+        """,
+            (merchant_id,),
+        )
         return [
-            {
-                "item_id":     item_id,
-                "name":        name,
-                "quantity":    qty,
-                "lastUpdated": updated
-            }
+            {"item_id": item_id, "name": name, "quantity": qty, "lastUpdated": updated}
             for item_id, name, qty, updated in cur.fetchall()
         ]
     finally:
         cur.close()
         conn.close()
+
 
 def get_purchase_restrictions(prs_id):
     conn = pyodbc.connect(
@@ -650,7 +675,8 @@ def get_purchase_restrictions(prs_id):
     )
     cur = conn.cursor()
     try:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT
               ci.Item_Name,
               COALESCE(ci.PurchaseLimit_Per_Day, ci.PurchaseLimit_Per_Week, 0) AS limit,
@@ -667,7 +693,9 @@ def get_purchase_restrictions(prs_id):
                 ON u.Schedule_ID = ps.Schedule_ID
               WHERE u.PRS_Id = ?
             ) ps
-        """, (prs_id,))
+        """,
+            (prs_id,),
+        )
         return [
             {"item": item, "limit": limit, "window": window, "schedule": schedule}
             for item, limit, window, schedule in cur.fetchall()
@@ -676,29 +704,23 @@ def get_purchase_restrictions(prs_id):
         cur.close()
         conn.close()
 
+
 def get_vaccination_stats(_merchant_id=None):
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
-    )
-    cur = conn.cursor()
+    client = MongoClient("mongodb://localhost:27017")
+    col = client.prs_db.vaccination_records
     try:
-        cur.execute("""
-            SELECT
-              COUNT(*)                                AS total,
-              SUM(CASE WHEN Verified = 1 THEN 1 ELSE 0 END) AS verified,
-              SUM(CASE WHEN Verified = 0 THEN 1 ELSE 0 END) AS pending
-            FROM VACCINATION_RECORD
-        """)
-        total, verified, pending = cur.fetchone()
-        return {
-            "totalRecords": total or 0,
-            "verified":     verified or 0,
-            "pending":      pending or 0
-        }
+        base_filter = {}
+
+        total = col.count_documents(base_filter)
+        verified = col.count_documents({**base_filter, "verified": True})
+        pending = col.count_documents(
+            {**base_filter, "$or": [{"verified": False}, {"verified": {"$exists": False}}]}
+        )
+
+        return {"totalRecords": total, "verified": verified, "pending": pending}
     finally:
-        cur.close()
-        conn.close()
+        client.close()
+
 
 def update_stock_by_name(merchant_id, item_id, new_quantity):
     conn = pyodbc.connect(
@@ -721,7 +743,10 @@ def update_stock_by_name(merchant_id, item_id, new_quantity):
             (new_quantity, merchant_id, item_id),
         )
         if cur.rowcount == 0:
-            return {"success": False, "error": "No matching inventory record found for that merchant and item"}
+            return {
+                "success": False,
+                "error": "No matching inventory record found for that merchant and item",
+            }
         conn.commit()
         return {"success": True}
     except Exception as e:
@@ -733,46 +758,30 @@ def update_stock_by_name(merchant_id, item_id, new_quantity):
 
 
 def update_verify_record(record_id, verified_status):
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
-    )
-    cur = conn.cursor()
+    client = MongoClient("mongodb://localhost:27017")
+    col = client.prs_db.vaccination_records
     try:
-        cur.execute(
-            """
-            UPDATE VACCINATION_RECORD
-            SET Verified = ?
-            WHERE Record_ID = ?
-            """,
-            (int(verified_status), record_id), 
+        result = col.update_one(
+            {"_id": ObjectId(record_id)},
+            {
+                "$set": {
+                    "verified": bool(int(verified_status)),
+                    "updatedAt": datetime.utcnow(),
+                }
+            },
         )
-
-        rows_updated = cur.rowcount
-        if rows_updated == 0:
-            conn.rollback()
+        if result.matched_count == 0:
             return {
                 "success": False,
-                "error": "No matching vaccination record found for Record_ID",
-                "rows_updated": 0
+                "error": "No matching vaccination record found for that Record_ID",
+                "rows_updated": 0,
             }
-
-        conn.commit()
-        return {
-            "success": True,
-            "rows_updated": rows_updated
-        }
-
+        return {"success": True, "rows_updated": result.modified_count}
     except Exception as e:
-        conn.rollback()
-        return {
-            "success": False,
-            "error": str(e),
-        }
-
+        return {"success": False, "error": str(e)}
     finally:
-        cur.close()
-        conn.close()
+        client.close()
+
 
 def get_all_vaccination_records():
     conn = pyodbc.connect(
@@ -791,12 +800,12 @@ def get_all_vaccination_records():
         print("Vaccination records: ", rows)
         return [
             {
-                "recordId":       recordID,
-                "id":              id,
-                "vaccineName":     name,
-                "dose":           dose,
+                "recordId": recordID,
+                "id": id,
+                "vaccineName": name,
+                "dose": dose,
                 "vaccinationDate": date,
-                "verified":       verified,
+                "verified": verified,
             }
             for recordID, id, name, dose, date, verified in rows
         ]
@@ -805,13 +814,115 @@ def get_all_vaccination_records():
         conn.close()
 
 
+# --------------------MONGO--------------------
+def get_all_vaccination_records_mongo():
+    client = MongoClient("mongodb://localhost:27017")
+    vaxcol = client.prs_db.vaccination_records
+    try:
+        cursor = vaxcol.find(
+            {},
+            {
+                "_id": 1,
+                "prsId": 1,
+                "vaccineName": 1,
+                "dose": 1,
+                "vaccinationDate": 1,
+                "lotNumber": 1,
+                "manufacturer": 1,
+                "status": 1,
+                "verified": 1,
+                "fhirPayload": 1,
+                "createdAt": 1,
+                "updatedAt": 1,
+            },
+        ).sort([("prsId", 1), ("vaccinationDate", 1)])
+
+        records = []
+        for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            records.append(doc)
+
+        return {"success": True, "records": records}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+    finally:
+        client.close()
+
+
+def fetch_all_immunizations_for_user(prs_id):
+    client = MongoClient("mongodb://localhost:27017")
+    vaxcol = client.prs_db.vaccination_records
+    try:
+        cursor = vaxcol.find(
+            {"prsId": prs_id},
+            {
+                "_id": 1,
+                "vaccineName": 1,
+                "dose": 1,
+                "vaccinationDate": 1,
+                "lotNumber": 1,
+                "manufacturer": 1,
+                "status": 1,
+                "fhirPayload": 1,
+            },
+        ).sort("vaccinationDate", 1)
+        return list(cursor)
+    finally:
+        client.close()
+
+
+def save_fhir_bundle_per_shot(bundle):
+    client = MongoClient("mongodb://localhost:27017")
+    col = client.prs_db.vaccination_records
+    docs = []
+    for entry in bundle["entry"]:
+        res = entry["resource"]
+        if res.get("resourceType") != "Immunization":
+            continue
+
+        prs_id = res["patient"]["identifier"]["value"]
+        vaccine = res["vaccineCode"]["coding"][0]["display"]
+        dose = res["protocolApplied"][0]["doseNumberPositiveInt"]
+        occ_str = res["occurrenceDateTime"]
+        vacc_date = datetime.fromisoformat(occ_str)
+        payload = res  # or json.dumps(res) if you prefer
+
+        docs.append(
+            {
+                "prsId": prs_id,
+                "vaccineName": vaccine,
+                "dose": str(dose),
+                "vaccinationDate": vacc_date,
+                "fhirPayload": payload,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow(),
+            }
+        )
+
+    if docs:
+        result = col.insert_many(docs)
+        return {"inserted_count": len(result.inserted_ids)}
+    return {"inserted_count": 0}
+
+
 if __name__ == "__main__":
+
+    with open(r"C:\Users\kas\Documents\GitHub\NHS-PRS\server\data_vacc.json") as f:
+        bundle = json.load(f)
+
+    # 2) Call the save function
+    # inserted_id = save_fhir_bundle_per_shot(bundle)
+    # print("Saved document with _id:", inserted_id)
+
     # Use a PRS_Id for the PRS‐based functions:
-    test_prs_id     = "PRS_000013"
+    test_prs_id = "PRS_000013"
     # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
     test_merchant_id = "MER001"
 
-    print("get allowed critical items", get_allowed_critical_items(test_prs_id))
+    print("get all vac stats:", get_vaccination_stats())
+    # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
     # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
     # print("get_merchant_id:", get_merchant_id(test_prs_id))
     # print("get all vaccination records:", get_all_vaccination_records())
