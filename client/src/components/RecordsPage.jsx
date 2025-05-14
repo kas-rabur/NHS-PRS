@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import '../css/UserDashboard.css';
 
@@ -31,7 +31,6 @@ export default function RecordsPage() {
           throw new Error(data.error || 'Failed to load records');
         }
 
-        // handle both: direct-array or { records: [...] }
         const recs = Array.isArray(data) ? data : data.records;
         setRecords(recs || []);
       })
@@ -47,31 +46,30 @@ export default function RecordsPage() {
     }
 
     try {
-      setMessage('Reading file...');
+      setMessage('Reading file…');
       const text = await file.text();
-      const bundle = JSON.parse(text);
-      bundle.prsId = prsId;
+      const bundle = JSON.parse(text);         
 
-      setMessage('Uploading...');
-      const res = await fetch('/api/upload_vaccination', {
+      setMessage('Uploading…');
+      const res = await fetch('http://localhost:5000/api/upload_vaccination', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(bundle),
+        body: JSON.stringify({ prsId, bundle }), 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
 
-      setMessage('Upload successful, reloading records...');
+      setMessage('Upload successful, reloading records…');
       const recRes = await fetch('/api/getUserVaccRecord', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ prsId }),
+        body: JSON.stringify({ prsId }),         
       });
       const recData = await recRes.json();
       console.log('getUserVaccRecord after upload:', recData);
@@ -82,9 +80,10 @@ export default function RecordsPage() {
       setMessage('Records updated');
     } catch (err) {
       console.error('upload error:', err);
-      setMessage(`Error: ${err.message}`);
+      alert(`Error: ${err.message}`);
     }
   };
+
 
   return (
     <div>

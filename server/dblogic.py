@@ -1,6 +1,6 @@
 import pyodbc
 import bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from pymongo import MongoClient
 from bson import ObjectId
@@ -142,28 +142,36 @@ def fetch_user_location(prs_id):
 
     return row[0] if row else None
 
-
 def fetch_user_vacc_record(prs_id):
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
-    )
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM dbo.VACCINATION_RECORD WHERE PRS_Id = ?", (prs_id,))
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    print("Vaccination records: ", rows)
-    return [
-        {
-            "prsId": r[1],
-            "vaccineName": r[2],
-            "dose": r[3],
-            "date": r[4],
-            "verified": r[5],
-        }
-        for r in rows
-    ]
+    client = MongoClient("mongodb://localhost:27017")
+    col = client.prs_db.vaccination_records
+    try:
+        cursor = col.find(
+            {"prsId": prs_id},
+            {
+                "_id": 0,
+                "prsId": 1,
+                "vaccineName": 1,
+                "dose": 1,
+                "vaccinationDate": 1,
+                "verified": 1
+            }
+        ).sort("vaccinationDate", 1)
+
+        records = []
+        for doc in cursor:
+            records.append({
+                "prsId":           doc.get("prsId"),
+                "vaccineName":     doc.get("vaccineName"),
+                "dose":            doc.get("dose"),
+                "date":            doc.get("vaccinationDate").isoformat() if doc.get("vaccinationDate") else None,
+                "verified":        doc.get("verified", False)
+            })
+        return records
+
+    finally:
+        client.close()
+
 
 
 def add_family_member(data):
@@ -375,7 +383,6 @@ def get_allowed_critical_items(prs_id):
     cur = conn.cursor()
 
     try:
-        # find which weekday this user is allowed
         cur.execute(
             """
             SELECT ps.Allowed_Day
@@ -383,7 +390,7 @@ def get_allowed_critical_items(prs_id):
             JOIN PURCHASE_SCHEDULE ps
               ON u.Schedule_ID = ps.Schedule_ID
             WHERE u.PRS_Id = ?
-        """,
+            """,
             (prs_id,),
         )
         row = cur.fetchone()
@@ -392,18 +399,17 @@ def get_allowed_critical_items(prs_id):
 
         allowed_abbr = row[0].strip()[:3].capitalize()
 
-        # compute week window, monday to monday, to make suer users can only buy on their allowed day and only once a week, then it resets
-        today = datetime.date.today()
-        start_of_week = today - datetime.timedelta(days=today.weekday())
-        next_monday = start_of_week + datetime.timedelta(days=7)
+        # compute week window, Monday → next Monday
+        today = datetime.today().date()
+        start_of_week = today - timedelta(days=today.weekday())
+        next_monday = start_of_week + timedelta(days=7)
 
         week_data = []
         for offset in range(7):
-            dt = start_of_week + datetime.timedelta(days=offset)
+            dt = start_of_week + timedelta(days=offset)
             day_abbr = dt.strftime("%a")
 
             if day_abbr == allowed_abbr:
-                # for the allowed day, sum all purchases within the weekly window
                 cur.execute(
                     """
                     SELECT
@@ -417,15 +423,14 @@ def get_allowed_critical_items(prs_id):
                           pt.PRS_Id = ?
                           AND pt.Transaction_Date >= ?
                           AND pt.Transaction_Date <  ?
-                          AND pt.Item_ID        = ci.Item_ID
+                          AND pt.Item_ID = ci.Item_ID
                       ) AS total_bought
                     FROM CRITICAL_ITEM ci
                     ORDER BY ci.Item_ID
-                """,
+                    """,
                     (prs_id, start_of_week, next_monday),
                 )
                 rows = cur.fetchall()
-
                 items = [
                     {
                         "item_id": item_id,
@@ -441,7 +446,7 @@ def get_allowed_critical_items(prs_id):
                     SELECT Item_ID, Item_Name, PurchaseLimit_Per_Day
                     FROM CRITICAL_ITEM
                     ORDER BY Item_ID
-                """
+                    """
                 )
                 items = [
                     {
@@ -457,7 +462,7 @@ def get_allowed_critical_items(prs_id):
                 {
                     "date": dt.isoformat(),
                     "day": day_abbr,
-                    "allowed": day_abbr == allowed_abbr,
+                    "allowed": (day_abbr == allowed_abbr),
                     "items": items,
                 }
             )
@@ -499,56 +504,56 @@ def get_allowed_day(prs_id):
         conn.close()
 
 
-def save_vaccination_bundle(prs_id, bundle):
-    conn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};"
-        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
-    )
-    cur = conn.cursor()
-    try:
-        for entry in bundle.get("entry", []):
-            resource = entry.get("resource", {})
-            if resource.get("resourceType") != "Immunization":
-                continue
+# def save_vaccination_bundle(prs_id, bundle):
+#     conn = pyodbc.connect(
+#         "DRIVER={ODBC Driver 17 for SQL Server};"
+#         "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+#     )
+#     cur = conn.cursor()
+#     try:
+#         for entry in bundle.get("entry", []):
+#             resource = entry.get("resource", {})
+#             if resource.get("resourceType") != "Immunization":
+#                 continue
 
-            vaccine = (
-                resource.get("vaccineCode", {})
-                .get("coding", [{}])[0]
-                .get("display", "")
-            )
-            dose = str(
-                resource.get("protocolApplied", [{}])[0].get(
-                    "doseNumberPositiveInt", ""
-                )
-            )
-            occurrence = resource.get("occurrenceDateTime", "")
-            vaccination_date = occurrence.split("T")[0] if occurrence else None
-            payload = json.dumps(resource)
+#             vaccine = (
+#                 resource.get("vaccineCode", {})
+#                 .get("coding", [{}])[0]
+#                 .get("display", "")
+#             )
+#             dose = str(
+#                 resource.get("protocolApplied", [{}])[0].get(
+#                     "doseNumberPositiveInt", ""
+#                 )
+#             )
+#             occurrence = resource.get("occurrenceDateTime", "")
+#             vaccination_date = occurrence.split("T")[0] if occurrence else None
+#             payload = json.dumps(resource)
 
-            cur.execute(
-                """
-                INSERT INTO VACCINATION_RECORD
-                  (PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified, Payload)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                prs_id,
-                vaccine,
-                dose,
-                vaccination_date,
-                1,
-                payload,
-            )
+#             cur.execute(
+#                 """
+#                 INSERT INTO VACCINATION_RECORD
+#                   (PRS_Id, Vaccine_Name, Dose, Vaccination_Date, Verified, Payload)
+#                 VALUES (?, ?, ?, ?, ?, ?)
+#                 """,
+#                 prs_id,
+#                 vaccine,
+#                 dose,
+#                 vaccination_date,
+#                 1,
+#                 payload,
+#             )
 
-        conn.commit()
-        return True, None
+#         conn.commit()
+#         return True, None
 
-    except Exception as e:
-        conn.rollback()
-        return False, str(e)
+#     except Exception as e:
+#         conn.rollback()
+#         return False, str(e)
 
-    finally:
-        cur.close()
-        conn.close()
+#     finally:
+#         cur.close()
+#         conn.close()
 
 
 # new funcs
@@ -714,7 +719,10 @@ def get_vaccination_stats(_merchant_id=None):
         total = col.count_documents(base_filter)
         verified = col.count_documents({**base_filter, "verified": True})
         pending = col.count_documents(
-            {**base_filter, "$or": [{"verified": False}, {"verified": {"$exists": False}}]}
+            {
+                **base_filter,
+                "$or": [{"verified": False}, {"verified": {"$exists": False}}],
+            }
         )
 
         return {"totalRecords": total, "verified": verified, "pending": pending}
@@ -872,39 +880,59 @@ def fetch_all_immunizations_for_user(prs_id):
     finally:
         client.close()
 
+def save_vaccination_bundle(data):
+    """
+    Expects `data` = { "prsId": "...", "bundle": { "entry": [ ... ] } }
+    Returns (success: bool, error: str|None)
+    """
+    prs_id = data.get("prsId")
+    bundle = data.get("bundle")
 
-def save_fhir_bundle_per_shot(bundle):
+    if not prs_id or not bundle or "entry" not in bundle:
+        return False, "Invalid payload: must include prsId and bundle.entry"
+
     client = MongoClient("mongodb://localhost:27017")
     col = client.prs_db.vaccination_records
+
     docs = []
-    for entry in bundle["entry"]:
-        res = entry["resource"]
-        if res.get("resourceType") != "Immunization":
-            continue
+    try:
+        for entry in bundle["entry"]:
+            res = entry.get("resource", {})
+            if res.get("resourceType") != "Immunization":
+                continue
 
-        prs_id = res["patient"]["identifier"]["value"]
-        vaccine = res["vaccineCode"]["coding"][0]["display"]
-        dose = res["protocolApplied"][0]["doseNumberPositiveInt"]
-        occ_str = res["occurrenceDateTime"]
-        vacc_date = datetime.fromisoformat(occ_str)
-        payload = res  # or json.dumps(res) if you prefer
+            vaccine = (
+                res.get("vaccineCode", {})
+                   .get("coding", [{}])[0]
+                   .get("display", "")
+            )
+            dose_str = str(
+                res.get("protocolApplied", [{}])[0]
+                   .get("doseNumberPositiveInt", "")
+            )
+            occ = res.get("occurrenceDateTime", "")
+            vacc_date = datetime.fromisoformat(occ) if occ else None
 
-        docs.append(
-            {
-                "prsId": prs_id,
-                "vaccineName": vaccine,
-                "dose": str(dose),
-                "vaccinationDate": vacc_date,
-                "fhirPayload": payload,
-                "createdAt": datetime.utcnow(),
-                "updatedAt": datetime.utcnow(),
-            }
-        )
+            docs.append({
+                "prsId":             prs_id,
+                "vaccineName":       vaccine,
+                "dose":              dose_str,
+                "vaccinationDate":   vacc_date,
+                "verified":          False,            # start as pending
+                "fhirPayload":       res,
+                "createdAt":         datetime.utcnow(),
+                "updatedAt":         datetime.utcnow()
+            })
 
-    if docs:
-        result = col.insert_many(docs)
-        return {"inserted_count": len(result.inserted_ids)}
-    return {"inserted_count": 0}
+        if docs:
+            col.insert_many(docs)
+        return True, None
+
+    except Exception as e:
+        return False, str(e)
+
+    finally:
+        client.close()
 
 
 if __name__ == "__main__":
@@ -921,8 +949,8 @@ if __name__ == "__main__":
     # Use a Merchant_ID (e.g. "MER001") for the merchant‐scoped functions:
     test_merchant_id = "MER001"
 
-    print("get all vac stats:", get_vaccination_stats())
-    # print("get allowed critical items", get_allowed_critical_items(test_prs_id))
+    # print("get all vac stats:", get_vaccination_stats())
+    print("user vacc", fetch_user_vacc_record(test_prs_id))
     # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
     # print("get_merchant_id:", get_merchant_id(test_prs_id))
     # print("get all vaccination records:", get_all_vaccination_records())

@@ -253,11 +253,7 @@ def upload_vaccination():
     if not bundle:
         return jsonify(success=False, error="No JSON provided"), 400
 
-    prs_id = bundle.get("prsId")
-    if not prs_id:
-        return jsonify(success=False, error="Missing prsId"), 400
-
-    success, error = dblogic.save_vaccination_bundle(prs_id, bundle)
+    success, error = dblogic.save_vaccination_bundle(bundle)
     if not success:
         return jsonify(success=False, error=error), 500
 
