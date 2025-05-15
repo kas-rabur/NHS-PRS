@@ -322,7 +322,7 @@ def update_verify_record():
             400,
         )
 
-    result = dblogic.update_verify_record( data["recordID"], data["verified_status"])
+    result = dblogic.update_verify_record(data["recordID"], data["verified_status"])
     if result.get("success"):
         return (
             jsonify(
@@ -343,11 +343,61 @@ def get_all_vaccination_records():
     if not result.get("success"):
         return jsonify(success=False, error=result.get("error")), 500
 
-    return jsonify({
-        "success": True,
-        "records": result["records"]
-    }), 200
+    return jsonify({"success": True, "records": result["records"]}), 200
 
+@app.route("/api/gov/purchase-limits", methods=["GET"])
+def purchase_limits():
+    try:
+        items = dblogic.get_all_purchase_restrictions()
+        return jsonify(items=items), 200
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
+@app.route("/api/gov/schedules", methods=["GET"])
+def all_schedules():
+    try:
+        items = dblogic.get_allowed_days_for_all()
+        return jsonify(schedules=items), 200
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
+@app.route("/api/gov/alerts", methods=["GET"])
+def real_time_alerts():
+    result = dblogic.get_alerts()
+    return jsonify(alerts=result.get("alerts", [])), 200
+
+
+@app.route("/api/gov/merchants", methods=["GET"])
+def registry_view():
+    result = dblogic.get_all_merchants()
+    return jsonify(merchants=result.get("merchants", [])), 200
+
+
+@app.route("/api/gov/compliance", methods=["GET"])
+def compliance_status():
+    result = dblogic.get_compliance_status()
+    return jsonify(statuses=result.get("statuses", [])), 200
+
+
+@app.route("/api/gov/stock", methods=["GET"])
+def stock_dashboard():
+    result = dblogic.get_all_stock()
+    return jsonify(stock=result.get("stock", [])), 200
+
+
+@app.route("/api/gov/vacc/records", methods=["POST"])
+def vaccination_records():
+    data = request.get_json() or {}
+    prs_id = data.get("prsId")
+    if prs_id:
+        records = dblogic.fetch_all_immunizations_for_user(prs_id)
+        return jsonify(records=records), 200
+    result = dblogic.get_all_vaccination_records_mongo()
+    if result.get("success"):
+        return jsonify(records=result.get("records", [])), 200
+    return jsonify(error=result.get("error")), 500
 
 
 if __name__ == "__main__":

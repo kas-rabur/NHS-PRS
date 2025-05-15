@@ -43,7 +43,7 @@ function App() {
         </Route>
 
         {/* Government Dashboard */}
-        <Route element={<RoleProtectedRoute allowedRoles={["government_user"]} />}>
+        <Route element={<RoleProtectedRoute allowedRoles={["gov_official"]} />}>
           <Route
             path="/governmentdashboard"
             element={

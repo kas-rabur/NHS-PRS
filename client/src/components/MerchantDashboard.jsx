@@ -47,6 +47,7 @@ export default function MerchantDashboard() {
     } catch {
       return;
     }
+    console.log("Merchant Dashboard: ", payload);
     setPrsId(payload.prs_id);
 
     fetch("http://localhost:5000/api/merchant/dashboard-data", {
@@ -217,7 +218,6 @@ export default function MerchantDashboard() {
 
   return (
     <section className="dashboard-container">
-      <Sidebar />
       <div className="dashboard-main">
         <Topbar title="Merchant Dashboard" />
 

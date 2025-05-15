@@ -1,49 +1,82 @@
 .home {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background-color: #f0f0f0;
-    padding: 15px;
-    min-height: 100vh;
+  display: flex;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar-home {
+  margin-bottom: 24px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.custom-card {
+  margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  color: #2d3748;
+}
+
+.section-heading {
+  font-size: 1.125rem;
+  margin: 12px 0 8px;
+  color: #4a5568;
+}
+
+.section-text {
+  font-size: 1rem;
+  color: #4a5568;
+}
+
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+  color: #2d3748;
+}
+
+.data-table th {
+  background-color: #edf2f7;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .data-table th,
+  .data-table td {
+    padding: 6px 8px;
+    font-size: 0.85rem;
   }
-  .cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px; 
-    width: 100%;
-    padding: 5px;
+  .card-title {
+    font-size: 1.25rem;
   }
-  
-  
-  .topbar-home{
-    grid-column: 1/-1;
-    grid-row: 1;
-  }
-  .card-home{
-    grid-row: 2;
-  }
-  .content-wrapper {
-    display: flex;
-    gap: 20px;
-    width: 100%;
-  }
-  
-  .sidebar {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    width: 200px;
-    height: 100%;
-    min-height: 600px;
-    margin-left: 25px;
-    margin-top: 20px;
-  }
-  
-  /* .cards-box {
-    flex-grow: 1;
-    padding: 20px;
-  
-  } */
-  
+}

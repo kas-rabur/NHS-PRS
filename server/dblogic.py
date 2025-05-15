@@ -142,6 +142,7 @@ def fetch_user_location(prs_id):
 
     return row[0] if row else None
 
+
 def fetch_user_vacc_record(prs_id):
     client = MongoClient("mongodb://localhost:27017")
     col = client.prs_db.vaccination_records
@@ -154,24 +155,29 @@ def fetch_user_vacc_record(prs_id):
                 "vaccineName": 1,
                 "dose": 1,
                 "vaccinationDate": 1,
-                "verified": 1
-            }
+                "verified": 1,
+            },
         ).sort("vaccinationDate", 1)
 
         records = []
         for doc in cursor:
-            records.append({
-                "prsId":           doc.get("prsId"),
-                "vaccineName":     doc.get("vaccineName"),
-                "dose":            doc.get("dose"),
-                "date":            doc.get("vaccinationDate").isoformat() if doc.get("vaccinationDate") else None,
-                "verified":        doc.get("verified", False)
-            })
+            records.append(
+                {
+                    "prsId": doc.get("prsId"),
+                    "vaccineName": doc.get("vaccineName"),
+                    "dose": doc.get("dose"),
+                    "date": (
+                        doc.get("vaccinationDate").isoformat()
+                        if doc.get("vaccinationDate")
+                        else None
+                    ),
+                    "verified": doc.get("verified", False),
+                }
+            )
         return records
 
     finally:
         client.close()
-
 
 
 def add_family_member(data):
@@ -504,6 +510,26 @@ def get_allowed_day(prs_id):
         conn.close()
 
 
+def get_allowed_days_for_all():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT Digit_Group, Allowed_Day
+            FROM PURCHASE_SCHEDULE 
+            """
+        )
+        rows = cur.fetchall()
+        return [{"digitgroup": row[0], "allowedDay": row[1]} for row in rows]
+    finally:
+        cur.close()
+        conn.close()
+
+
 # def save_vaccination_bundle(prs_id, bundle):
 #     conn = pyodbc.connect(
 #         "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -710,6 +736,28 @@ def get_purchase_restrictions(prs_id):
         conn.close()
 
 
+def get_all_purchase_restrictions():
+
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT
+              Item_Name,
+              ISNULL(PurchaseLimit_Per_Day, 0) AS limit
+            FROM CRITICAL_ITEM
+            """
+        )
+        return [{"item": item, "limit": limit} for item, limit in cur.fetchall()]
+    finally:
+        cur.close()
+        conn.close()
+
+
 def get_vaccination_stats(_merchant_id=None):
     client = MongoClient("mongodb://localhost:27017")
     col = client.prs_db.vaccination_records
@@ -880,6 +928,7 @@ def fetch_all_immunizations_for_user(prs_id):
     finally:
         client.close()
 
+
 def save_vaccination_bundle(data):
     """
     Expects `data` = { "prsId": "...", "bundle": { "entry": [ ... ] } }
@@ -902,27 +951,26 @@ def save_vaccination_bundle(data):
                 continue
 
             vaccine = (
-                res.get("vaccineCode", {})
-                   .get("coding", [{}])[0]
-                   .get("display", "")
+                res.get("vaccineCode", {}).get("coding", [{}])[0].get("display", "")
             )
             dose_str = str(
-                res.get("protocolApplied", [{}])[0]
-                   .get("doseNumberPositiveInt", "")
+                res.get("protocolApplied", [{}])[0].get("doseNumberPositiveInt", "")
             )
             occ = res.get("occurrenceDateTime", "")
             vacc_date = datetime.fromisoformat(occ) if occ else None
 
-            docs.append({
-                "prsId":             prs_id,
-                "vaccineName":       vaccine,
-                "dose":              dose_str,
-                "vaccinationDate":   vacc_date,
-                "verified":          False,            # start as pending
-                "fhirPayload":       res,
-                "createdAt":         datetime.utcnow(),
-                "updatedAt":         datetime.utcnow()
-            })
+            docs.append(
+                {
+                    "prsId": prs_id,
+                    "vaccineName": vaccine,
+                    "dose": dose_str,
+                    "vaccinationDate": vacc_date,
+                    "verified": False,  # start as pending
+                    "fhirPayload": res,
+                    "createdAt": datetime.utcnow(),
+                    "updatedAt": datetime.utcnow(),
+                }
+            )
 
         if docs:
             col.insert_many(docs)
@@ -933,6 +981,79 @@ def save_vaccination_bundle(data):
 
     finally:
         client.close()
+
+def get_all_merchants():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT Merchant_ID, Business_License_Number, Name, Registration_Info FROM MERCHANT"
+        )
+        merchants = []
+        for mid, lic, nm, reg in cur.fetchall():
+            merchants.append(
+                {
+                    "merchantId": mid,
+                    "businessLicense": lic,
+                    "name": nm,
+                    "registrationInfo": reg,
+                }
+            )
+        return {"merchants": merchants}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def get_compliance_status():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT s.Store_ID, "
+            "CASE WHEN SUM(CASE WHEN pt.Is_Valid = 0 THEN 1 ELSE 0 END) > 0 "
+            "THEN 'Non-Compliant' ELSE 'Compliant' END as Status "
+            "FROM STORE s "
+            "LEFT JOIN PURCHASE_TRANSACTION pt ON s.Store_ID = pt.Store_ID "
+            "GROUP BY s.Store_ID"
+        )
+        statuses = []
+        for store_id, status in cur.fetchall():
+            statuses.append({"location": store_id, "status": status})
+        return {"statuses": statuses}
+    finally:
+        cur.close()
+        conn.close()
+
+
+def get_all_stock():
+    conn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};"
+        "SERVER=localhost;DATABASE=NHS-PRS;Trusted_Connection=yes;"
+    )
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT st.Store_ID, ci.Item_ID, ci.Item_Name, inv.Stock_Quantity "
+            "FROM INVENTORY inv "
+            "JOIN STORE st ON inv.Store_ID = st.Store_ID "
+            "JOIN CRITICAL_ITEM ci ON inv.Item_ID = ci.Item_ID"
+        )
+        stock = []
+        for sid, iid, nm, qty in cur.fetchall():
+            stock.append(
+                {"storeId": sid, "itemId": iid, "item_name": nm, "quantity": qty}
+            )
+        return {"stock": stock}
+    finally:
+        cur.close()
+        conn.close()
 
 
 if __name__ == "__main__":
@@ -950,7 +1071,7 @@ if __name__ == "__main__":
     test_merchant_id = "MER001"
 
     # print("get all vac stats:", get_vaccination_stats())
-    print("user vacc", fetch_user_vacc_record(test_prs_id))
+    print("res", get_allowed_days_for_all())
     # print("get update stock", update_stock_by_name("MER001", "ITEM001", 38))
     # print("get_merchant_id:", get_merchant_id(test_prs_id))
     # print("get all vaccination records:", get_all_vaccination_records())
