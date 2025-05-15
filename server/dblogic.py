@@ -965,7 +965,7 @@ def save_vaccination_bundle(data):
                     "vaccineName": vaccine,
                     "dose": dose_str,
                     "vaccinationDate": vacc_date,
-                    "verified": False,  # start as pending
+                    "verified": False,  
                     "fhirPayload": res,
                     "createdAt": datetime.utcnow(),
                     "updatedAt": datetime.utcnow(),
